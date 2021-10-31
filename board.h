@@ -1,6 +1,8 @@
 #ifndef __BOARD_H__
 #define __BOARD_H__
 
+#include "piece.h"
+
 #define BOARD_X  8
 #define BOARD_Y  8
 #define BOARD_HEIGHT 3
@@ -19,9 +21,11 @@ public:
 
 	// TODO: clone();
 	void output(); // 出力
-	// TODO: 駒を置く
+	bool put(Piece p, int c); // 駒を盤面に配置
 	// TODO: 合法手の列挙
 	bool judge(int turn); // 勝敗判定
+
+	void test();
 };
 
 #endif

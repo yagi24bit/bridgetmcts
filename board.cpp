@@ -21,13 +21,11 @@ void Board::output() {
 	const char *number[] = {"   ", " 1 ", " 2 ", " 3 ", " 4 ", " 5 ", " 6 ", " 7 ", " 8 "};
 
 	for(int x = 0; x <= BOARD_X; x++) { printf("%s", number[x]); }
-	// 暫定 (ここから)
 	printf(" ");
 	for(int i = 0; i < 3; i++) {
 		printf("   ");
 		for(int x = 0; x < BOARD_X; x++) { printf(" %d", x + 1); }
 	}
-	// 暫定 (ここまで)
 	printf("\n");
 
 	for(int y = 0; y < BOARD_Y; y++) {
@@ -41,7 +39,6 @@ void Board::output() {
 			printf(block[c << 2 | h]);
 		}
 
-		// 暫定 (ここから)
 		printf("   %d", y + 1);
 		for(int x = 0; x < BOARD_X; x++) {
 			int b = y * BOARD_X + x;
@@ -57,9 +54,26 @@ void Board::output() {
 			int b = y * BOARD_X + x;
 			printf(" %s", (board2 >> b & 1 ? "#" : "."));
 		}
-		// 暫定 (ここまで)
 		printf("\n");
 	}
+}
+
+// 駒を盤面に配置
+bool Board::put(Piece p, int c) {
+	// 既存の駒と重なる置き方は禁止
+	if(board0 & p.piece0 | board1 & p.piece1 | board2 & p.piece2) { return false; }
+	// 駒の下に空白ができる置き方は禁止
+	if(~(board0 | p.piece0) & p.piece1 | ~(board1 | p.piece1) & p.piece2) { return false; }
+
+	board0 |= p.piece0;
+	board1 |= p.piece1;
+	board2 |= p.piece2;
+	if(c == 0) {
+		color &= ~(p.piece0 | p.piece1 | p.piece2);
+	} else {
+		color |= (p.piece0 | p.piece1 | p.piece2);
+	}
+	return true;
 }
 
 // 勝利判定
@@ -94,4 +108,26 @@ bool Board::judge(int turn) {
 	}
 
 	return false;
+}
+
+void Board::test() {
+	// 初期状態で置ける駒を列挙
+	for(int i = 0; i < PIECE_TYPES; i++) {
+		for(int j = 0; j < DEFAULT_PIECE_TURNS[i]; j++) {
+			board0 = 0; board1 = 0; board2 = 0;
+			if(put(DEFAULT_PIECES[i][j], 0)) { output(); }
+		}
+	}
+
+	/*
+	// 空中に置けないチェック
+	put(default_pieces[5][3], 0);
+	output();
+	Piece w = default_pieces[7][0];
+	w.piece0 <<= 1; w.piece1 <<= 1; w.piece2 <<= 1;
+	put(w, 1);
+	output();
+	put(default_pieces[5][3], 0);
+	output();
+	*/
 }
