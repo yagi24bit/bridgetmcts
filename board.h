@@ -18,6 +18,7 @@ protected:
 	t_color color; // 真上から見たときの色
 
 	static Piece ALL_PIECES[ALL_PIECE_PATTERNS];
+	static int ALL_PIECES_INDEX[PIECE_TYPES][4][BOARD_Y][BOARD_X];
 
 public:
 	Board();
@@ -28,6 +29,8 @@ public:
 	// TODO: clone();
 	void output(); // 出力
 	bool put(Piece p, int c); // 駒を盤面に配置
+	bool put(int type, int dir, int x, int y, int c); // 駒を盤面に配置 (種類と座標指定)
+	bool put(char *s, int c); // 駒を盤面に配置 (棋譜形式)
 	// TODO: 合法手の列挙
 	bool judge(int turn); // 勝敗判定
 

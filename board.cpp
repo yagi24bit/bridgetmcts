@@ -3,6 +3,7 @@
 #include "board.h"
 
 Piece Board::ALL_PIECES[ALL_PIECE_PATTERNS];
+int Board::ALL_PIECES_INDEX[PIECE_TYPES][4][BOARD_Y][BOARD_X];
 
 // コンストラクタ
 Board::Board() {
@@ -20,6 +21,7 @@ Board::~Board() {
 void Board::initializeAllPieces() {
 	// 初期化
 	memset(ALL_PIECES, 0, sizeof(Piece) * ALL_PIECE_PATTERNS);
+	memset(ALL_PIECES_INDEX, (unsigned char)0xFF, sizeof(int) * PIECE_TYPES * 4 * BOARD_Y * BOARD_X);
 
 	int index = 0;
 	for(int t = 0; t < PIECE_TYPES; t++) {
@@ -45,7 +47,9 @@ void Board::initializeAllPieces() {
 				int x_temp = x;
 
 				while(true) {
-					ALL_PIECES[index++] = p_temp;
+					ALL_PIECES_INDEX[t][d][y][x_temp] = index;
+					ALL_PIECES[index] = p_temp;
+					index++;
 
 					if((p_temp.piece0 | p_temp.piece1 | p_temp.piece2) & 0x8080808080808080ull) { break; }
 					// p_temp を x 方向にスライド
@@ -127,6 +131,57 @@ bool Board::put(Piece p, int c) {
 	return true;
 }
 
+// 駒を盤面に配置 (種類と座標指定)
+bool Board::put(int type, int dir, int y, int x, int c) {
+	if(type < 0 || type >= PIECE_TYPES) { return false; }
+	if(dir < 0 || dir >= 4) { return false; }
+	if(x < 0 || x >= BOARD_X) { return false; }
+	if(y < 0 || y >= BOARD_Y) { return false; }
+
+	int i = ALL_PIECES_INDEX[type][dir][y][x];
+	if(i == -1) { return false; }
+
+	return put(ALL_PIECES[i], c);
+}
+
+// 駒を盤面に配置 (棋譜形式)
+bool Board::put(char *s, int c) {
+		if(s == NULL || strlen(s) < 4) { return false; }
+
+	int type, dir; // 種類, 向き
+	int y = s[0] - '1', x = s[1] - '1'; // X 座標, Y 座標
+
+	switch(s[2]) {
+		case 'L': case 'l': type =  0; break;
+		case 'J': case 'j': type =  1; break;
+		case 'P': case 'p': type =  2; break;
+		case 'H': case 'h': type =  3; break;
+		case 'B': case 'b': type =  4; break;
+		case 'C': case 'c': type =  5; break;
+		case 'O': case 'o': type =  6; break;
+		case 'W': case 'w': type =  7; break;
+		case 'S': case 's': type =  8; break;
+		case 'Z': case 'z': type =  9; break;
+		case 'D': case 'd': type = 10; break;
+		case 'A': case 'a': type = 11; break;
+		case 'T': case 't': type = 12; break;
+		case 'V': case 'v': type = 13; break;
+		case 'U': case 'u': type = 14; break;
+		case 'G': case 'g': type = 15; break;
+		default:            return false;
+	}
+
+	switch(s[3]) {
+		case 'E': case 'e': dir = 0; break;
+		case 'S': case 's': dir = 1; break;
+		case 'W': case 'w': dir = 2; break;
+		case 'N': case 'n': dir = 3; break;
+		default:            return false;
+	}
+
+	put(type, dir, y, x, c);
+}
+
 // 勝利判定
 bool Board::judge(int turn) {
 	t_color board = board0 & (turn ? color : ~color); // プレーヤの駒が置かれている場所
@@ -185,6 +240,7 @@ void Board::test() {
 	*/
 
 	// 駒の全パターン列挙
+	/*
 	int count = 0;
 	for(int i = 0; i < ALL_PIECE_PATTERNS; i++) {
 		Piece p = ALL_PIECES[i];
@@ -195,4 +251,12 @@ void Board::test() {
 		}
 	}
 	printf("count = %d\n", count);
+	*/
+
+	// 棋譜形式の置き方チェック
+	const char* kifu[] = {"44WS", "45CW", "43VS", "42CE", "46BS", "55GE", "66CN", "65WS", "64CE", "63GN", "52CE", "51VS", "62GW", "71CN", "82VE", "35WE", "27WS", "73VE", "77VS", "12ZS", "13DW", "15DW", "84DW", "23DW"};
+	for(int i = 0; i < sizeof(kifu) / sizeof(const char*); i++) {
+		put((char*)kifu[i], i % 2);
+		output();
+	}
 }
