@@ -11,4 +11,7 @@ typedef struct {
 extern const Piece DEFAULT_PIECES[][4];
 extern const int DEFAULT_PIECE_TURNS[];
 
+#define DEFAULT_PIECES_X 2
+#define DEFAULT_PIECES_Y 2
+
 #endif
