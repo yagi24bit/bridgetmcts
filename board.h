@@ -20,6 +20,10 @@ protected:
 	static Piece ALL_PIECES[ALL_PIECE_PATTERNS];
 	static int ALL_PIECES_INDEX[PIECE_TYPES][4][BOARD_Y][BOARD_X];
 
+	t_board fliph1(t_board b); // 左右反転 (1 変数)
+	t_board flipv1(t_board b); // 上下反転 (1 変数)
+	t_board flipxy1(t_board b); // XY 軸反転 (1 変数)
+
 public:
 	Board();
 	~Board();
@@ -31,6 +35,10 @@ public:
 	bool put(Piece p, int c); // 駒を盤面に配置
 	bool put(int type, int dir, int x, int y, int c); // 駒を盤面に配置 (種類と座標指定)
 	bool put(char *s, int c); // 駒を盤面に配置 (棋譜形式)
+	void fliph(); // 左右反転
+	void flipv(); // 上下反転
+	void flipxy(); // XY 軸反転
+	int normalize(); // 正規化
 	// TODO: 合法手の列挙
 	bool judge(int turn); // 勝敗判定
 

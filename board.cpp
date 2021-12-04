@@ -182,6 +182,96 @@ bool Board::put(char *s, int c) {
 	put(type, dir, y, x, c);
 }
 
+// 左右反転 (1 変数)
+t_board Board::fliph1(t_board b) {
+	b = (b & 0xF0F0F0F0F0F0F0F0ull) >> 4 | (b & 0x0F0F0F0F0F0F0F0Full) << 4;
+	b = (b & 0xCCCCCCCCCCCCCCCCull) >> 2 | (b & 0x3333333333333333ull) << 2;
+	b = (b & 0xAAAAAAAAAAAAAAAAull) >> 1 | (b & 0x5555555555555555ull) << 1;
+	return b;
+}
+
+// 左右反転
+void Board::fliph() {
+	board0 = fliph1(board0);
+	board1 = fliph1(board1);
+	board2 = fliph1(board2);
+	color  = fliph1(color);
+}
+
+// 上下反転 (1 変数)
+t_board Board::flipv1(t_board b) {
+	#ifdef _MSC_VER
+	return _byteswap_uint64(b);
+	#else
+	return __builtin_bswap64(b);
+	#endif
+}
+
+// 上下反転
+void Board::flipv() {
+	board0 = flipv1(board0);
+	board1 = flipv1(board1);
+	board2 = flipv1(board2);
+	color  = flipv1(color);
+}
+
+// XY 軸反転 (1 変数)
+t_board Board::flipxy1(t_board b) {
+	t_board t;
+	t  = (b ^ (b << 28)) & 0x0F0F0F0F00000000ull;
+	b ^=  t ^ (t >> 28);
+	t  = (b ^ (b << 14)) & 0x3333000033330000ull;
+	b ^=  t ^ (t >> 14);
+	t  = (b ^ (b <<  7)) & 0x5500550055005500ull;
+	b ^=  t ^ (t >>  7);
+	return b;
+}
+
+// XY 軸反転
+void Board::flipxy() {
+	board0 = flipxy1(board0);
+	board1 = flipxy1(board1);
+	board2 = flipxy1(board2);
+	color  = flipxy1(color);
+}
+
+// 正規化
+int Board::normalize() {
+	t_board board0_min = 0xFFFFFFFFFFFFFFFFull, board1_min = 0xFFFFFFFFFFFFFFFFull, board2_min = 0xFFFFFFFFFFFFFFFFull, color_min = 0xFFFFFFFFFFFFFFFFull;
+	int ret = 0;
+
+	for(int z = 0; z <= 1; z++) {
+		for(int y = 0; y <= 1; y++) {
+			for(int x = 0; x <= 1; x++) {
+				if(
+					board2 < board2_min
+					|| (board2 == board2_min && board1 < board1_min)
+					|| (board2 == board2_min && board1 == board1_min && board0 < board0_min)
+					|| (board2 == board2_min && board1 == board1_min && board0 == board0_min && color < color_min)
+				) {
+					board0_min = board0;
+					board1_min = board1;
+					board2_min = board2;
+					color_min = color;
+					ret = z << 2 | y << 1 | x;
+				}
+
+				fliph();
+			}
+			flipv();
+		}
+
+		if(z == 0) { flipxy(); }
+	}
+
+	board0 = board0_min;
+	board1 = board1_min;
+	board2 = board2_min;
+	color = color_min;
+
+	return ret;
+}
+
 // 勝利判定
 bool Board::judge(int turn) {
 	t_color board = board0 & (turn ? color : ~color); // プレーヤの駒が置かれている場所
@@ -253,10 +343,22 @@ void Board::test() {
 	printf("count = %d\n", count);
 	*/
 
+	/*
 	// 棋譜形式の置き方チェック
 	const char* kifu[] = {"44WS", "45CW", "43VS", "42CE", "46BS", "55GE", "66CN", "65WS", "64CE", "63GN", "52CE", "51VS", "62GW", "71CN", "82VE", "35WE", "27WS", "73VE", "77VS", "12ZS", "13DW", "15DW", "84DW", "23DW"};
 	for(int i = 0; i < sizeof(kifu) / sizeof(const char*); i++) {
 		put((char*)kifu[i], i % 2);
 		output();
 	}
+	*/
+
+	// 正規化
+	board0 = 0x0008181CFC3E6800;
+	board1 = 0x000818187C3E0800;
+	board2 = 0x00000818080E0000;
+	color  = 0xAA55AA55AA55AA55;
+	output();
+	int r = normalize();
+	output();
+	printf("rotate = (%d, %d, %d)\n", r & 1, r >> 1 & 1, r >> 2 & 1);
 }
