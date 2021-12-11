@@ -4,6 +4,7 @@
 typedef unsigned long long int t_piece; // ブロックの有無
 
 typedef struct {
+	unsigned char type; // ブロックの種類
 	t_piece piece0, piece1, piece2; // ブロックの有無 (それぞれ 1 段目・2 段目・3 段目)
 } Piece;
 

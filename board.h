@@ -14,6 +14,7 @@ typedef unsigned long long int t_color; // ブロックの色
 
 class Board {
 protected:
+	unsigned short pieces_in_hand0, pieces_in_hand1; // 持ち駒数 (それぞれ先手・後手、下位から 4 ビットずつ L・O・S・T)
 	t_board board0, board1, board2; // ブロックの有無 (それぞれ 1 段目・2 段目・3 段目)
 	t_color color; // 真上から見たときの色
 

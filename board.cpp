@@ -8,6 +8,8 @@ int Board::ALL_PIECES_INDEX[PIECE_PUT_TYPES][4][BOARD_Y][BOARD_X];
 // コンストラクタ
 Board::Board() {
 	// ボード初期化
+	pieces_in_hand0 = 0x4424;
+	pieces_in_hand1 = 0x4424;
 	board0 = 0x0000000000000000ull;
 	board1 = 0x0000000000000000ull;
 	board2 = 0x0000000000000000ull;
@@ -111,6 +113,11 @@ void Board::output() {
 		}
 		printf("\n");
 	}
+
+	printf("(L, O, S, T) = ");
+	printf("(%d, %d, %d, %d), ", pieces_in_hand0 & 7, pieces_in_hand0 >> 4 & 7, pieces_in_hand0 >> 8 & 7, pieces_in_hand0 >> 12 & 7);
+	printf("(%d, %d, %d, %d)\n", pieces_in_hand1 & 7, pieces_in_hand1 >> 4 & 7, pieces_in_hand1 >> 8 & 7, pieces_in_hand1 >> 12 & 7);
+	printf("\n");
 }
 
 // 駒を盤面に配置
@@ -119,15 +126,21 @@ bool Board::put(Piece p, int c) {
 	if(board0 & p.piece0 | board1 & p.piece1 | board2 & p.piece2) { return false; }
 	// 駒の下に空白ができる置き方は禁止
 	if(~(board0 | p.piece0) & p.piece1 | ~(board1 | p.piece1) & p.piece2) { return false; }
+	// 持っていない駒を使用する置き方は禁止
+	if(((c == 0 ? pieces_in_hand0 : pieces_in_hand1) >> p.type * 4 & 7) == 0) { return false; }
 
 	board0 |= p.piece0;
 	board1 |= p.piece1;
 	board2 |= p.piece2;
+
 	if(c == 0) {
 		color &= ~(p.piece0 | p.piece1 | p.piece2);
+		pieces_in_hand0 -= (1 << p.type * 4);
 	} else {
 		color |= (p.piece0 | p.piece1 | p.piece2);
+		pieces_in_hand1 -= (1 << p.type * 4);
 	}
+
 	return true;
 }
 
@@ -352,6 +365,7 @@ void Board::test() {
 	}
 	*/
 
+	/*
 	// 正規化
 	board0 = 0x0008181CFC3E6800;
 	board1 = 0x000818187C3E0800;
@@ -361,4 +375,17 @@ void Board::test() {
 	int r = normalize();
 	output();
 	printf("rotate = (%d, %d, %d)\n", r & 1, r >> 1 & 1, r >> 2 & 1);
+	*/
+
+	// 持っていない駒を置けないチェック
+	const char* kifu[] = {
+		"11PS", "12PS", "13PS", "14PS", "15PS",
+		"25OE", "27OE", "47OE",
+		"41DN", "42DN", "43DN", "44DN", "45DN",
+		"47VE", "57VE", "67VE", "77VE", "87VE",
+	};
+	for(int i = 0; i < sizeof(kifu) / sizeof(const char*); i++) {
+		printf("%s : %s\n", kifu[i], put((char*)kifu[i], 0) ? "true" : "false");
+		output();
+	}
 }
