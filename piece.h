@@ -7,7 +7,9 @@ typedef struct {
 	t_piece piece0, piece1, piece2; // ブロックの有無 (それぞれ 1 段目・2 段目・3 段目)
 } Piece;
 
-#define PIECE_TYPES 16
+#define PIECE_TYPES 4
+#define PIECE_PUT_TYPES 16
+
 extern const Piece DEFAULT_PIECES[][4];
 extern const int DEFAULT_PIECE_TURNS[];
 

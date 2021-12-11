@@ -18,7 +18,7 @@ protected:
 	t_color color; // 真上から見たときの色
 
 	static Piece ALL_PIECES[ALL_PIECE_PATTERNS];
-	static int ALL_PIECES_INDEX[PIECE_TYPES][4][BOARD_Y][BOARD_X];
+	static int ALL_PIECES_INDEX[PIECE_PUT_TYPES][4][BOARD_Y][BOARD_X];
 
 	t_board fliph1(t_board b); // 左右反転 (1 変数)
 	t_board flipv1(t_board b); // 上下反転 (1 変数)

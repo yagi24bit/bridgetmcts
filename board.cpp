@@ -3,7 +3,7 @@
 #include "board.h"
 
 Piece Board::ALL_PIECES[ALL_PIECE_PATTERNS];
-int Board::ALL_PIECES_INDEX[PIECE_TYPES][4][BOARD_Y][BOARD_X];
+int Board::ALL_PIECES_INDEX[PIECE_PUT_TYPES][4][BOARD_Y][BOARD_X];
 
 // コンストラクタ
 Board::Board() {
@@ -21,10 +21,10 @@ Board::~Board() {
 void Board::initializeAllPieces() {
 	// 初期化
 	memset(ALL_PIECES, 0, sizeof(Piece) * ALL_PIECE_PATTERNS);
-	memset(ALL_PIECES_INDEX, (unsigned char)0xFF, sizeof(int) * PIECE_TYPES * 4 * BOARD_Y * BOARD_X);
+	memset(ALL_PIECES_INDEX, (unsigned char)0xFF, sizeof(int) * PIECE_PUT_TYPES * 4 * BOARD_Y * BOARD_X);
 
 	int index = 0;
-	for(int t = 0; t < PIECE_TYPES; t++) {
+	for(int t = 0; t < PIECE_PUT_TYPES; t++) {
 		for(int d = 0; d < 4; d++) {
 			Piece p = DEFAULT_PIECES[t][d];
 			if((p.piece0 | p.piece1 | p.piece2) == 0ull) { continue; }
@@ -133,7 +133,7 @@ bool Board::put(Piece p, int c) {
 
 // 駒を盤面に配置 (種類と座標指定)
 bool Board::put(int type, int dir, int y, int x, int c) {
-	if(type < 0 || type >= PIECE_TYPES) { return false; }
+	if(type < 0 || type >= PIECE_PUT_TYPES) { return false; }
 	if(dir < 0 || dir >= 4) { return false; }
 	if(x < 0 || x >= BOARD_X) { return false; }
 	if(y < 0 || y >= BOARD_Y) { return false; }
@@ -309,7 +309,7 @@ bool Board::judge(int turn) {
 void Board::test() {
 	/*
 	// 初期状態で置ける駒を列挙
-	for(int i = 0; i < PIECE_TYPES; i++) {
+	for(int i = 0; i < PIECE_PUT_TYPES; i++) {
 		for(int j = 0; j < DEFAULT_PIECE_TURNS[i]; j++) {
 			board0 = 0; board1 = 0; board2 = 0;
 			if(put(DEFAULT_PIECES[i][j], 0)) { output(); }
