@@ -10,8 +10,8 @@ typedef struct {
 #define PIECE_TYPES 4
 #define PIECE_PUT_TYPES 16
 
-extern const Piece DEFAULT_PIECES[][4];
-extern const int DEFAULT_PIECE_TURNS[];
+extern const Piece DEFAULT_PIECES[PIECE_PUT_TYPES][4];
+extern const int DEFAULT_PIECE_TURNS[PIECE_PUT_TYPES];
 
 #define DEFAULT_PIECES_X 2
 #define DEFAULT_PIECES_Y 2

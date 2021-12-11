@@ -3,7 +3,7 @@
 #define PIECE_EMPTY {0, 0, 0}
 
 // NOTE: 中心は (x, y) = (2, 2)、E→S→W→N の順
-const Piece DEFAULT_PIECES[][4] = {
+const Piece DEFAULT_PIECES[PIECE_PUT_TYPES][4] = {
 	{{0x0C04040000, 0, 0}, {0x01070000, 0, 0}, {0x040406, 0, 0}, {0x1C1000, 0, 0}}, // L
 	{{0x04040C, 0, 0}, {0x101C0000, 0, 0}, {0x0604040000, 0, 0}, {0x070100, 0, 0}}, // J
 	{{0x1C0000, 0x040000, 0}, {0x0404040000, 0x040000, 0}, {0x070000, 0x040000, 0}, {0x040404, 0x040000, 0}}, // Pelican
@@ -20,13 +20,11 @@ const Piece DEFAULT_PIECES[][4] = {
 	{{0x0E0000, 0x040000, 0}, {0x04040400, 0x040000, 0}, PIECE_EMPTY, PIECE_EMPTY}, // Vessel
 	{{0x040000, 0x0E0000, 0}, {0x040000, 0x04040400, 0}, PIECE_EMPTY, PIECE_EMPTY}, // Umbrella
 	{{0x040000, 0x0C0000, 0x040000}, {0x040000, 0x04040000, 0x040000}, {0x040000, 0x060000, 0x040000}, {0x040000, 0x040400, 0x040000}}, // Guide Post
-	{PIECE_EMPTY, PIECE_EMPTY, PIECE_EMPTY, PIECE_EMPTY} // DUMMY
 };
 
-const int DEFAULT_PIECE_TURNS[] = {
+const int DEFAULT_PIECE_TURNS[PIECE_PUT_TYPES] = {
 	4, 4, 4, 4, 4, 4, // L
 	1, 2,             // O
 	2, 2, 4, 4,       // S
 	4, 2, 2, 4,       // T
-	0 // DUMMY
 };
