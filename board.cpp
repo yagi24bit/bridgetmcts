@@ -4,6 +4,7 @@
 
 Piece Board::ALL_PIECES[ALL_PIECE_PATTERNS];
 int Board::ALL_PIECES_INDEX[PIECE_PUT_TYPES][4][BOARD_Y][BOARD_X];
+const int ALL_PIECES_COUNT[] = {1168, 161, 584, 584};
 
 // コンストラクタ
 Board::Board() {
@@ -316,6 +317,52 @@ int Board::normalize() {
 	return ret;
 }
 
+// 合法手を列挙
+int Board::enumNext(int c, bool (*callback)(Board*, Piece, int, int)) {
+	Board *arr[ALL_PIECE_PATTERNS];
+	int first = 0, last = 0;
+	int count = 0;
+
+	Board *b = clone(); // 作業用のインスタンスを作成
+
+	for(int p = 0; p < PIECE_TYPES; p++) {
+		first = last;
+		last += ALL_PIECES_COUNT[p];
+
+		// 持ち駒が残っているかどうかのチェック
+		if((c == 0 ? pieces_in_hand0 : pieces_in_hand1) >> p * 4 & 7) {
+			for(int i = first; i < last; i++) {
+				// 置けるかどうかのチェック
+				if(b -> put(ALL_PIECES[i], c)) {
+					int t = b -> normalize();
+
+					// 重複チェック
+					bool found = false;
+					for(int j = 0; j < count; j++) {
+						if(b -> equals(arr[j])) { found = true; break; }
+					}
+					if(found) { copyTo(b); continue; }
+
+					arr[count++] = b -> clone(); // コピーして重複チェック用の配列に保持
+
+					// コールバック関数を呼び出し
+					// 引数 … 盤面、置いた駒 (正規化前)、置いた駒の通し番号 (正規化前)、正規化時の反転フラグ
+					// NOTE: 盤面のインスタンスはコールバック先で削除する
+					bool ret = (*callback)(b, ALL_PIECES[i], i, t);
+					if(!ret) { for(int i = 0; i < count; i++) { delete arr[i]; } return count; } // 戻り値が false の場合はそこで列挙処理終了
+
+					b = clone(); // 作業用のインスタンスをもうひとつ作成
+				}
+			}
+		}
+	}
+
+	for(int i = 0; i < count; i++) { delete arr[i]; } // 重複チェック用のインスタンスを削除
+	delete b; // 作業用のインスタンスを削除
+
+	return count;
+}
+
 // 勝利判定
 bool Board::judge(int turn) {
 	t_color board = board0 & (turn ? color : ~color); // プレーヤの駒が置かれている場所
@@ -422,6 +469,7 @@ void Board::test() {
 	}
 	*/
 
+	/*
 	// clone, copyTo, equalis のテスト
 	put((char*)"33OE", 0);
 	Board *c = clone();
@@ -437,4 +485,15 @@ void Board::test() {
 	d -> output();
 	delete d;
 	delete c;
+	*/
+
+	// 合法手を列挙
+	struct test {
+		static bool callback(Board *b, Piece p, int index, int turn) {
+			b -> output();
+			delete b;
+			return true;
+		};
+	};
+	printf("%d patterns\n", enumNext(0, &test::callback));
 }
