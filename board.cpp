@@ -16,6 +16,10 @@ Board::Board() {
 	color  = 0x0000000000000000ull;
 }
 
+// コピーコンストラクタ
+Board::Board(const Board &b) : board0(b.board0), board1(b.board1), board2(b.board2), color(b.color), pieces_in_hand0(b.pieces_in_hand0), pieces_in_hand1(b.pieces_in_hand1) {
+}
+
 // デストラクタ
 Board::~Board() {
 }
@@ -70,6 +74,33 @@ void Board::initializeAllPieces() {
 			}
 		}
 	}
+}
+
+// 自身のコピーインスタンスを作成
+Board *Board::clone() {
+	return new Board(*this);
+}
+
+// コピー
+void Board::copyTo(Board *b) {
+	b -> pieces_in_hand0 = pieces_in_hand0;
+	b -> pieces_in_hand1 = pieces_in_hand1;
+	b -> board0 = board0;
+	b -> board1 = board1;
+	b -> board2 = board2;
+	b -> color  = color;
+}
+
+// 一致判定
+bool Board::equals(Board *b) {
+	return (
+		   b -> pieces_in_hand0 == pieces_in_hand0
+		&& b -> pieces_in_hand1 == pieces_in_hand1
+		&& b -> board0 == board0
+		&& b -> board1 == board1
+		&& b -> board2 == board2
+		&& b -> color  == color
+	);
 }
 
 // デバッグ出力
@@ -377,6 +408,7 @@ void Board::test() {
 	printf("rotate = (%d, %d, %d)\n", r & 1, r >> 1 & 1, r >> 2 & 1);
 	*/
 
+	/*
 	// 持っていない駒を置けないチェック
 	const char* kifu[] = {
 		"11PS", "12PS", "13PS", "14PS", "15PS",
@@ -388,4 +420,21 @@ void Board::test() {
 		printf("%s : %s\n", kifu[i], put((char*)kifu[i], 0) ? "true" : "false");
 		output();
 	}
+	*/
+
+	// clone, copyTo, equalis のテスト
+	put((char*)"33OE", 0);
+	Board *c = clone();
+	put((char*)"54SE", 1);
+	c -> put((char*)"45ZS", 1);
+	output();
+	c -> output();
+	printf("%s\n", equals(c) ? "true" : "false");
+	c -> normalize();
+	printf("%s\n", equals(c) ? "true" : "false");
+	Board *d = new Board();
+	copyTo(d);
+	d -> output();
+	delete d;
+	delete c;
 }

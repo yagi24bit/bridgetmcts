@@ -26,12 +26,15 @@ protected:
 	t_board flipxy1(t_board b); // XY 軸反転 (1 変数)
 
 public:
-	Board();
-	~Board();
+	Board(); // コンストラクタ
+	Board(const Board &board); // コピーコンストラクタ
+	~Board(); // デストラクタ
 
 	static void initializeAllPieces();
 
-	// TODO: clone();
+	Board *clone(); // 自身のコピーインスタンスを作成
+	void copyTo(Board *b); // コピー
+	bool equals(Board *b); // 一致判定
 	void output(); // 出力
 	bool put(Piece p, int c); // 駒を盤面に配置
 	bool put(int type, int dir, int x, int y, int c); // 駒を盤面に配置 (種類と座標指定)
