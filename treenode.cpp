@@ -18,6 +18,55 @@ TreeNode::~TreeNode() {
 	delete board;
 }
 
+bool TreeNode::staticEnumNextCallback(Board *b, Piece p, int pindex, int tflag, void *args) {
+	TreeNode *_this = (TreeNode*)args;
+	return _this -> enumNextCallback(b, p, pindex, tflag, args);
+}
+
+bool TreeNode::enumNextCallback(Board *b, Piece p, int pindex, int tflag, void *args) {
+	// 勝敗判定
+	bool judge = board -> judge((depth - 1) & 1);
+
+	if(judge) {
+		// 勝利局面
+		for(int i = 0; i < nextCount; i++) { delete nextNode[i]; } // これまでのノードを全て削除
+		nextNode[0] = new TreeNode(b, depth + 1);
+		nextPiece[0] = p;
+		nextPieceIndex[0] = pindex;
+		turnFlag[0] = tflag;
+		nextCount = 1;
+		return false; // 勝ち局面の場合は探索を中断
+	} else {
+		// 勝利局面以外
+		// TODO: 重複チェック
+		nextNode[nextCount] = new TreeNode(b, depth + 1);
+		nextPiece[nextCount] = p;
+		nextPieceIndex[nextCount] = pindex;
+		turnFlag[nextCount] = tflag;
+		nextCount++;
+		return true;
+	}
+}
+
+void TreeNode::expand() {
+	if(isExpanded) { return; }
+	isExpanded = true;
+
+	board -> enumNext(depth & 1, &staticEnumNextCallback, (void*)this);
+
+	// TODO: 0 件の場合はパス
+	// TODO: 先手・後手ともに 0 件の場合はステイルメイト判定
+}
+
 void TreeNode::test() {
-	board -> output();
+	// expand のテスト
+	printf("count = %d\n", count);
+
+	expand();
+	printf("nextCount = %d\n", nextCount);
+	printf("count = %d\n", count);
+
+	nextNode[0] -> expand();
+	printf("nextCount = %d\n", nextNode[0] -> nextCount);
+	printf("count = %d\n", count);
 }

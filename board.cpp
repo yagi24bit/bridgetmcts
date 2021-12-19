@@ -318,7 +318,7 @@ int Board::normalize() {
 }
 
 // 合法手を列挙
-int Board::enumNext(int c, bool (*callback)(Board*, Piece, int, int)) {
+int Board::enumNext(int c, bool (*callback)(Board*, Piece, int, int, void*), void *args) {
 	Board *arr[ALL_PIECE_PATTERNS];
 	int first = 0, last = 0;
 	int count = 0;
@@ -348,7 +348,7 @@ int Board::enumNext(int c, bool (*callback)(Board*, Piece, int, int)) {
 					// コールバック関数を呼び出し
 					// 引数 … 盤面、置いた駒 (正規化前)、置いた駒の通し番号 (正規化前)、正規化時の反転フラグ
 					// NOTE: 盤面のインスタンスはコールバック先で削除する
-					bool ret = (*callback)(b, ALL_PIECES[i], i, t);
+					bool ret = (*callback)(b, ALL_PIECES[i], i, t, args);
 					if(!ret) { for(int i = 0; i < count; i++) { delete arr[i]; } return count; } // 戻り値が false の場合はそこで列挙処理終了
 
 					b = clone(); // 作業用のインスタンスをもうひとつ作成
@@ -487,13 +487,15 @@ void Board::test() {
 	delete c;
 	*/
 
+	/*
 	// 合法手を列挙
 	struct test {
-		static bool callback(Board *b, Piece p, int index, int turn) {
+		static bool callback(Board *b, Piece p, int index, int turn, void *args) {
 			b -> output();
 			delete b;
 			return true;
 		};
 	};
 	printf("%d patterns\n", enumNext(0, &test::callback));
+	*/
 }

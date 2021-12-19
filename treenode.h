@@ -23,9 +23,14 @@ protected:
 	int nextPieceIndex[NEXT_BOARDS]; // 駒の置き方の通し番号
 	int turnFlag[NEXT_BOARDS]; // 回転フラグ
 
+	static bool staticEnumNextCallback(Board *b, Piece p, int pindex, int tflag, void *args);
+	bool enumNextCallback(Board *b, Piece p, int pindex, int tflag, void *args);
+
 public:
 	TreeNode(Board *b, int d);
 	~TreeNode();
+
+	void expand();
 
 	void test();
 };
