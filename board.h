@@ -1,6 +1,7 @@
 #ifndef __BOARD_H__
 #define __BOARD_H__
 
+#include <functional>
 #include "piece.h"
 
 #define BOARD_X  8
@@ -34,7 +35,7 @@ public:
 
 	Board *clone(); // 自身のコピーインスタンスを作成
 	void copyTo(Board *b); // コピー
-	bool equals(Board *b); // 一致判定
+	bool equals(Board *b) const; // 一致判定
 	void output(); // 出力
 	bool put(Piece p, int c); // 駒を盤面に配置
 	bool put(int type, int dir, int x, int y, int c); // 駒を盤面に配置 (種類と座標指定)
@@ -46,7 +47,25 @@ public:
 	int enumNext(int c, bool (*callback)(Board*, Piece, int, int, void*), void *args); // 合法手を列挙
 	bool judge(int turn); // 勝敗判定
 
+	// ハッシュテーブル用
+	bool operator ==(const Board &b) const { return this -> equals((Board*)&b); } // == 演算子
+	friend std::hash<Board>;
+
 	void test();
 };
+
+namespace std {
+	template<>
+	class hash<Board> {
+		public:
+		size_t operator() (const Board &b) const {
+			// 簡易的なハッシュ値
+			return (b.board0 ^ b.board0 >> 32)
+				^ (b.board1 ^ b.board1 >> 32) << 1
+				^ (b.board2 ^ b.board2 >> 32) << 2
+				^ (b.color ^ b.color >> 32) << 3;
+		}
+	};
+}
 
 #endif

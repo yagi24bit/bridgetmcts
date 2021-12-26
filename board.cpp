@@ -93,7 +93,7 @@ void Board::copyTo(Board *b) {
 }
 
 // 一致判定
-bool Board::equals(Board *b) {
+bool Board::equals(Board *b) const {
 	return (
 		   b -> pieces_in_hand0 == pieces_in_hand0
 		&& b -> pieces_in_hand1 == pieces_in_hand1

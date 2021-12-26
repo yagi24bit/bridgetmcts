@@ -2,13 +2,14 @@
 #define __treenode_h__
 
 #include "board.h"
+#include <unordered_map>
 
 #define NEXT_BOARDS ALL_PIECE_PATTERNS // TODO: 減らせるかどうか検討
 
 class TreeNode {
 protected:
 	static unsigned int count;
-	// TODO: static ハッシュテーブル
+	static std::unordered_map<Board, TreeNode*> map; // 重複チェック用のハッシュマップ
 
 	unsigned int indexNumber; // 通し番号
 	Board *board; // 盤面

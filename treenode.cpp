@@ -2,6 +2,7 @@
 #include "treenode.h"
 
 unsigned int TreeNode::count;
+std::unordered_map<Board, TreeNode*> TreeNode::map;
 
 TreeNode::TreeNode(Board *b, int d) {
 	indexNumber = __atomic_fetch_add(&count, 1, __ATOMIC_ACQ_REL);
@@ -38,8 +39,13 @@ bool TreeNode::enumNextCallback(Board *b, Piece p, int pindex, int tflag, void *
 		return false; // 勝ち局面の場合は探索を中断
 	} else {
 		// 勝利局面以外
-		// TODO: 重複チェック
-		nextNode[nextCount] = new TreeNode(b, depth + 1);
+		if(map.count(*b) > 0) {
+			nextNode[nextCount] = map[*b]; // 既に見つかっているノードのポインタを格納
+		} else {
+			TreeNode *newtree = new TreeNode(b, depth + 1);
+			nextNode[nextCount] = newtree; // 新しいノードを作成してポインタを格納
+			map[*b] = newtree;
+		}
 		nextPiece[nextCount] = p;
 		nextPieceIndex[nextCount] = pindex;
 		turnFlag[nextCount] = tflag;
@@ -59,6 +65,7 @@ void TreeNode::expand() {
 }
 
 void TreeNode::test() {
+	/*
 	// expand のテスト
 	printf("count = %d\n", count);
 
@@ -69,4 +76,17 @@ void TreeNode::test() {
 	nextNode[0] -> expand();
 	printf("nextCount = %d\n", nextNode[0] -> nextCount);
 	printf("count = %d\n", count);
+	*/
+
+	// 重複局面検知のテスト
+	expand();
+	// 12JS(21LE) → 33O → 31TE
+	nextNode[7] -> expand();
+	nextNode[7] -> nextNode[680] -> expand();
+	nextNode[7] -> nextNode[680] -> nextNode[837] -> board -> output();
+	// 13TS(31TE) → 33O → 21LE
+	nextNode[148] -> expand();
+	nextNode[148] -> nextNode[680] -> expand();
+	nextNode[148] -> nextNode[680] -> nextNode[4] -> board -> output();
+	printf("%s\n", (nextNode[7] -> nextNode[680] -> nextNode[837] == nextNode[148] -> nextNode[680] -> nextNode[4] ? "OK" : "NG"));
 }
