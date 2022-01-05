@@ -58,9 +58,17 @@ void TreeNode::expand() {
 	if(isExpanded) { return; }
 	isExpanded = true;
 
-	board -> enumNext(depth & 1, &staticEnumNextCallback, (void*)this);
+	int count = board -> enumNext(depth & 1, &staticEnumNextCallback, (void*)this);
 
-	// TODO: 0 件の場合はパス
+	// 駒が置けない場合はパス (ノードを 1 つだけ作ってぶら下げる)
+	if(count == 0) {
+		nextNode[0] = new TreeNode(board, depth + 1);
+		nextPiece[0] = {0, 0, 0};
+		nextPieceIndex[0] = -1;
+		turnFlag[0] = 0;
+		nextCount = 1;
+	}
+
 	// TODO: 先手・後手ともに 0 件の場合はステイルメイト判定
 }
 
