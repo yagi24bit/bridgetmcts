@@ -46,6 +46,7 @@ public:
 	int normalize(); // 正規化
 	int enumNext(int c, bool (*callback)(Board*, Piece, int, int, void*), void *args); // 合法手を列挙
 	bool judge(int turn); // 勝敗判定
+	int judgeStalemate(); // ステイルメイト判定
 
 	// ハッシュテーブル用
 	bool operator ==(const Board &b) const { return this -> equals((Board*)&b); } // == 演算子

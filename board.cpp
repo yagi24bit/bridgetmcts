@@ -397,6 +397,20 @@ bool Board::judge(int turn) {
 	return false;
 }
 
+// 1 が立っているビットの数をカウント
+int popcount(t_board b) {
+	return __builtin_popcountll(b);
+}
+
+// ステイルメイト判定
+// 1 : 先手の勝ち、0 : 引き分け、-1 : 後手の勝ち
+int Board::judgeStalemate() {
+	int c0 = popcount(board0 & ~color);
+	int c1 = popcount(board0 & color);
+
+	return (c0 > c1 ? 1 : c0 == c1 ? 0 : -1);
+}
+
 void Board::test() {
 	/*
 	// 初期状態で置ける駒を列挙
