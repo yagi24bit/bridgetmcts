@@ -1,5 +1,5 @@
 .PHONY: all
-all: piece.o board.o treenode.o bridget.exe
+all: piece.o board.o treenode.o xorshift.o bridget.exe
 
 
 
@@ -12,8 +12,11 @@ board.o: board.h board.cpp piece.o
 treenode.o: treenode.h treenode.cpp board.o
 	g++ -std=c++11 -c -o treenode.o treenode.cpp
 
+xorshift.o: xorshift.h xorshift.cpp
+	g++ -c -o xorshift.o xorshift.cpp
+
 bridget.exe: bridget.cpp piece.o board.o treenode.o
-	g++ -std=c++11 -o bridget.exe bridget.cpp piece.o board.o treenode.o
+	g++ -std=c++11 -o bridget.exe bridget.cpp piece.o board.o treenode.o xorshift.o
 
 
 
