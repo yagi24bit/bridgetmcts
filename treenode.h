@@ -16,6 +16,7 @@ protected:
 	int depth; // ノードの深さ
 	int totalCount; // 到達回数
 	int winCount; // 勝利回数
+	int selectCount[NEXT_BOARDS]; // 子ノードを選択した回数
 
 	bool isExpanded; // 子ノードを展開済みかどうか
 	int nextCount; // 合法手の数
@@ -32,6 +33,7 @@ public:
 	~TreeNode();
 
 	void expand();
+	int select();
 
 	void test();
 };

@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <math.h>
 #include "treenode.h"
+#include "xorshift.h"
 
 unsigned int TreeNode::count;
 std::unordered_map<Board, TreeNode*> TreeNode::map;
@@ -35,6 +37,7 @@ bool TreeNode::enumNextCallback(Board *b, Piece p, int pindex, int tflag, void *
 		nextPiece[0] = p;
 		nextPieceIndex[0] = pindex;
 		turnFlag[0] = tflag;
+		selectCount[0] = 0;
 		nextCount = 1;
 		return false; // 勝ち局面の場合は探索を中断
 	} else {
@@ -49,6 +52,7 @@ bool TreeNode::enumNextCallback(Board *b, Piece p, int pindex, int tflag, void *
 		nextPiece[nextCount] = p;
 		nextPieceIndex[nextCount] = pindex;
 		turnFlag[nextCount] = tflag;
+		selectCount[nextCount] = 0;
 		nextCount++;
 		return true;
 	}
@@ -70,6 +74,45 @@ void TreeNode::expand() {
 	}
 
 	// TODO: 先手・後手ともに 0 件の場合はステイルメイト判定
+}
+
+int TreeNode::select() {
+	int tempCount = 0;
+	int tempIndex[NEXT_BOARDS];
+
+	if(!isExpanded) { expand(); }
+	totalCount++;
+
+	if(nextCount == 1) {
+		// 1 手しか無い場合は固定
+		selectCount[0]++;
+		return 0;
+	} else if(totalCount < nextCount) {
+		// 試していない局面がある場合、試していないノードを候補に加える
+		for(int i = 0; i < nextCount; i++) {
+			if(selectCount[i] == 0) { tempIndex[tempCount++] = i; }
+		}
+	} else {
+		// スコアが最大の手を候補に加える
+		double max = -INFINITY;
+		double logn = log(totalCount);
+		for(int i = 0; i < nextCount; i++) {
+			TreeNode *next = nextNode[i];
+			double score = (next -> totalCount == 0 ? 0 : next -> winCount / next -> totalCount) + sqrt(2.0 * logn / selectCount[i]);
+			if(max < score) {
+				max = score;
+				tempIndex[0] = i;
+				tempCount = 1;
+			} else if(max == score) {
+				tempIndex[tempCount++] = i;
+			}
+		}
+	}
+
+	// 候補の中からランダムに 1 つを選択
+	int idx = tempIndex[XorShift::xor128() % tempCount];
+	selectCount[idx]++;
+	return idx;
 }
 
 void TreeNode::test() {
