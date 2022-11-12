@@ -14,16 +14,16 @@ protected:
 	unsigned int indexNumber; // 通し番号
 	Board *board; // 盤面
 	int depth; // ノードの深さ
-	int totalCount; // 到達回数
-	int winCount; // 勝利回数
-	int selectCount[NEXT_BOARDS]; // 子ノードを選択した回数
-
 	bool isExpanded; // 子ノードを展開済みかどうか
 	int nextCount; // 合法手の数
 	TreeNode *nextNode[NEXT_BOARDS]; // 次のノード
 	Piece nextPiece[NEXT_BOARDS]; // 駒の置き方
 	int nextPieceIndex[NEXT_BOARDS]; // 駒の置き方の通し番号
 	int turnFlag[NEXT_BOARDS]; // 回転フラグ
+
+	int totalCount; // 到達回数
+	int winCount; // 勝利回数 (手番側)
+	int selectCount[NEXT_BOARDS]; // 子ノードを選択した回数
 
 	static bool staticEnumNextCallback(Board *b, Piece p, int pindex, int tflag, void *args);
 	bool enumNextCallback(Board *b, Piece p, int pindex, int tflag, void *args);
