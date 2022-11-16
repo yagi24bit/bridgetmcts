@@ -10,6 +10,7 @@ TreeNode::TreeNode(Board *b, int d) {
 	indexNumber = __atomic_fetch_add(&count, 1, __ATOMIC_ACQ_REL);
 	board = b;
 	depth = d;
+	refCount = 1;
 	totalCount = 0;
 	winCount = 0;
 
@@ -28,11 +29,11 @@ bool TreeNode::staticEnumNextCallback(Board *b, Piece p, int pindex, int tflag, 
 
 bool TreeNode::enumNextCallback(Board *b, Piece p, int pindex, int tflag, void *args) {
 	// 勝敗判定
-	bool judge = board -> judge((depth - 1) & 1);
+	bool judge = b -> judge(depth & 1);
 
 	if(judge) {
 		// 勝利局面
-		for(int i = 0; i < nextCount; i++) { delete nextNode[i]; } // これまでのノードを全て削除
+		for(int i = 0; i < nextCount; i++) { if(--(nextNode[i] -> refCount) == 0) { map.erase(*nextNode[i] -> board); delete nextNode[i]; } } // これまでのノードを全て削除
 		nextNode[0] = new TreeNode(b, depth + 1);
 		nextPiece[0] = p;
 		nextPieceIndex[0] = pindex;
@@ -44,6 +45,7 @@ bool TreeNode::enumNextCallback(Board *b, Piece p, int pindex, int tflag, void *
 		// 勝利局面以外
 		if(map.count(*b) > 0) {
 			nextNode[nextCount] = map[*b]; // 既に見つかっているノードのポインタを格納
+			nextNode[nextCount] -> refCount++;
 		} else {
 			TreeNode *newtree = new TreeNode(b, depth + 1);
 			nextNode[nextCount] = newtree; // 新しいノードを作成してポインタを格納
@@ -129,6 +131,7 @@ void TreeNode::test() {
 	printf("count = %d\n", count);
 	*/
 
+	/*
 	// 重複局面検知のテスト
 	expand();
 	// 12JS(21LE) → 33O → 31TE
@@ -140,4 +143,22 @@ void TreeNode::test() {
 	nextNode[148] -> nextNode[680] -> expand();
 	nextNode[148] -> nextNode[680] -> nextNode[4] -> board -> output();
 	printf("%s\n", (nextNode[7] -> nextNode[680] -> nextNode[837] == nextNode[148] -> nextNode[680] -> nextNode[4] ? "OK" : "NG"));
+	*/
+
+	// 勝利局面を見つけたときのテスト
+	expand();
+	// 11PE → 17O → 21LE → 14LS → 14PE
+	nextNode[42] -> expand();
+	nextNode[42] -> nextNode[712] -> expand();
+	nextNode[42] -> nextNode[712] -> nextNode[9] -> expand();
+	nextNode[42] -> nextNode[712] -> nextNode[9] -> nextNode[31] -> expand();
+	// 11PE → 17O → 14PE → 14LS (→ 28JN)
+	nextNode[42] -> nextNode[712] -> nextNode[287] -> expand();
+	nextNode[42] -> nextNode[712] -> nextNode[287] -> nextNode[35] -> expand();
+
+	// 11PE → 17O → 21LE → 14LS → 14PE の局面 (11PE → 17O → 14PE → 14LS → 21LE と同一) は delete されずに残る
+	nextNode[42] -> nextNode[712] -> nextNode[9] -> nextNode[31] -> nextNode[209] -> board -> output();
+	// 11PE → 17O → 21LE → 14LS の子ノードは 28JN の局面 1 つだけ
+	printf("%s\n", (nextNode[42] -> nextNode[712] -> nextNode[287] -> nextNode[35] -> nextCount == 1 ? "OK" : "NG"));
+	nextNode[42] -> nextNode[712] -> nextNode[287] -> nextNode[35] -> nextNode[0] -> board -> output();
 }

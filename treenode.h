@@ -14,6 +14,7 @@ protected:
 	unsigned int indexNumber; // 通し番号
 	Board *board; // 盤面
 	int depth; // ノードの深さ
+	int refCount; // 親ノードの数
 	bool isExpanded; // 子ノードを展開済みかどうか
 	int nextCount; // 合法手の数
 	TreeNode *nextNode[NEXT_BOARDS]; // 次のノード
