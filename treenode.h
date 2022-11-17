@@ -13,7 +13,6 @@ protected:
 
 	unsigned int indexNumber; // 通し番号
 	Board *board; // 盤面
-	int depth; // ノードの深さ
 	int refCount; // 親ノードの数
 	bool isExpanded; // 子ノードを展開済みかどうか
 	int nextCount; // 合法手の数
@@ -26,11 +25,11 @@ protected:
 	int winCount; // 勝利回数 (手番側)
 	int selectCount[NEXT_BOARDS]; // 子ノードを選択した回数
 
-	static bool staticEnumNextCallback(Board *b, Piece p, int pindex, int tflag, void *args);
-	bool enumNextCallback(Board *b, Piece p, int pindex, int tflag, void *args);
+	static bool staticEnumNextCallback(Board *b, Piece p, int pindex, bool judge, int tflag, void *args);
+	bool enumNextCallback(Board *b, Piece p, int pindex, bool judge, int tflag, void *args);
 
 public:
-	TreeNode(Board *b, int d);
+	TreeNode(Board *b);
 	~TreeNode();
 
 	void expand();

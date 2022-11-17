@@ -15,6 +15,7 @@ typedef unsigned long long int t_color; // ブロックの色
 
 class Board {
 protected:
+	bool turn; // 手番 (false : 先手、true : 後手)
 	unsigned short pieces_in_hand0, pieces_in_hand1; // 持ち駒数 (それぞれ先手・後手、下位から 4 ビットずつ L・O・S・T)
 	t_board board0, board1, board2; // ブロックの有無 (それぞれ 1 段目・2 段目・3 段目)
 	t_color color; // 真上から見たときの色
@@ -40,12 +41,13 @@ public:
 	bool put(Piece p, int c); // 駒を盤面に配置
 	bool put(int type, int dir, int x, int y, int c); // 駒を盤面に配置 (種類と座標指定)
 	bool put(char *s, int c); // 駒を盤面に配置 (棋譜形式)
+	void changeTurn(); // 手番を交代
 	void fliph(); // 左右反転
 	void flipv(); // 上下反転
 	void flipxy(); // XY 軸反転
 	int normalize(); // 正規化
-	int enumNext(int c, bool (*callback)(Board*, Piece, int, int, void*), void *args); // 合法手を列挙
-	bool judge(int turn); // 勝敗判定
+	int enumNext(bool (*callback)(Board*, Piece, int, bool, int, void*), void *args); // 合法手を列挙
+	bool judge(bool turn); // 勝敗判定
 	int judgeStalemate(); // ステイルメイト判定
 
 	// ハッシュテーブル用

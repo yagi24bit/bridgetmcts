@@ -6,10 +6,9 @@
 unsigned int TreeNode::count;
 std::unordered_map<Board, TreeNode*> TreeNode::map;
 
-TreeNode::TreeNode(Board *b, int d) {
+TreeNode::TreeNode(Board *b) {
 	indexNumber = __atomic_fetch_add(&count, 1, __ATOMIC_ACQ_REL);
 	board = b;
-	depth = d;
 	refCount = 1;
 	totalCount = 0;
 	winCount = 0;
@@ -22,19 +21,16 @@ TreeNode::~TreeNode() {
 	delete board;
 }
 
-bool TreeNode::staticEnumNextCallback(Board *b, Piece p, int pindex, int tflag, void *args) {
+bool TreeNode::staticEnumNextCallback(Board *b, Piece p, int pindex, bool judge, int tflag, void *args) {
 	TreeNode *_this = (TreeNode*)args;
-	return _this -> enumNextCallback(b, p, pindex, tflag, args);
+	return _this -> enumNextCallback(b, p, pindex, judge, tflag, args);
 }
 
-bool TreeNode::enumNextCallback(Board *b, Piece p, int pindex, int tflag, void *args) {
-	// 勝敗判定
-	bool judge = b -> judge(depth & 1);
-
+bool TreeNode::enumNextCallback(Board *b, Piece p, int pindex, bool judge, int tflag, void *args) {
 	if(judge) {
 		// 勝利局面
 		for(int i = 0; i < nextCount; i++) { if(--(nextNode[i] -> refCount) == 0) { map.erase(*nextNode[i] -> board); delete nextNode[i]; } } // これまでのノードを全て削除
-		nextNode[0] = new TreeNode(b, depth + 1);
+		nextNode[0] = new TreeNode(b);
 		nextPiece[0] = p;
 		nextPieceIndex[0] = pindex;
 		turnFlag[0] = tflag;
@@ -47,7 +43,7 @@ bool TreeNode::enumNextCallback(Board *b, Piece p, int pindex, int tflag, void *
 			nextNode[nextCount] = map[*b]; // 既に見つかっているノードのポインタを格納
 			nextNode[nextCount] -> refCount++;
 		} else {
-			TreeNode *newtree = new TreeNode(b, depth + 1);
+			TreeNode *newtree = new TreeNode(b);
 			nextNode[nextCount] = newtree; // 新しいノードを作成してポインタを格納
 			map[*b] = newtree;
 		}
@@ -64,11 +60,13 @@ void TreeNode::expand() {
 	if(isExpanded) { return; }
 	isExpanded = true;
 
-	int count = board -> enumNext(depth & 1, &staticEnumNextCallback, (void*)this);
+	int count = board -> enumNext(&staticEnumNextCallback, (void*)this);
 
 	// 駒が置けない場合はパス (ノードを 1 つだけ作ってぶら下げる)
 	if(count == 0) {
-		nextNode[0] = new TreeNode(board, depth + 1);
+		Board *b = new Board(*board);
+		b -> changeTurn();
+		nextNode[0] = new TreeNode(b);
 		nextPiece[0] = {0, 0, 0};
 		nextPieceIndex[0] = -1;
 		turnFlag[0] = 0;

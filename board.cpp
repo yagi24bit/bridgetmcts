@@ -9,6 +9,7 @@ const int ALL_PIECES_COUNT[] = {1168, 161, 584, 584};
 // コンストラクタ
 Board::Board() {
 	// ボード初期化
+	turn = false;
 	pieces_in_hand0 = 0x4424;
 	pieces_in_hand1 = 0x4424;
 	board0 = 0x0000000000000000ull;
@@ -18,7 +19,7 @@ Board::Board() {
 }
 
 // コピーコンストラクタ
-Board::Board(const Board &b) : board0(b.board0), board1(b.board1), board2(b.board2), color(b.color), pieces_in_hand0(b.pieces_in_hand0), pieces_in_hand1(b.pieces_in_hand1) {
+Board::Board(const Board &b) : turn(b.turn), board0(b.board0), board1(b.board1), board2(b.board2), color(b.color), pieces_in_hand0(b.pieces_in_hand0), pieces_in_hand1(b.pieces_in_hand1) {
 }
 
 // デストラクタ
@@ -84,6 +85,7 @@ Board *Board::clone() {
 
 // コピー
 void Board::copyTo(Board *b) {
+	b -> turn = turn;
 	b -> pieces_in_hand0 = pieces_in_hand0;
 	b -> pieces_in_hand1 = pieces_in_hand1;
 	b -> board0 = board0;
@@ -95,7 +97,8 @@ void Board::copyTo(Board *b) {
 // 一致判定
 bool Board::equals(Board *b) const {
 	return (
-		   b -> pieces_in_hand0 == pieces_in_hand0
+		   b -> turn == turn
+		&& b -> pieces_in_hand0 == pieces_in_hand0
 		&& b -> pieces_in_hand1 == pieces_in_hand1
 		&& b -> board0 == board0
 		&& b -> board1 == board1
@@ -146,6 +149,7 @@ void Board::output() {
 		printf("\n");
 	}
 
+	printf("turn : %d, ", (turn ? 1 : 0));
 	printf("(L, O, S, T) = ");
 	printf("(%d, %d, %d, %d), ", pieces_in_hand0 & 7, pieces_in_hand0 >> 4 & 7, pieces_in_hand0 >> 8 & 7, pieces_in_hand0 >> 12 & 7);
 	printf("(%d, %d, %d, %d)\n", pieces_in_hand1 & 7, pieces_in_hand1 >> 4 & 7, pieces_in_hand1 >> 8 & 7, pieces_in_hand1 >> 12 & 7);
@@ -172,6 +176,8 @@ bool Board::put(Piece p, int c) {
 		color |= (p.piece0 | p.piece1 | p.piece2);
 		pieces_in_hand1 -= (1 << p.type * 4);
 	}
+
+	changeTurn(); // 手番を交代
 
 	return true;
 }
@@ -225,6 +231,11 @@ bool Board::put(char *s, int c) {
 	}
 
 	put(type, dir, y, x, c);
+}
+
+// 手番を交代
+void Board::changeTurn() {
+	turn = !turn;
 }
 
 // 左右反転 (1 変数)
@@ -318,7 +329,7 @@ int Board::normalize() {
 }
 
 // 合法手を列挙
-int Board::enumNext(int c, bool (*callback)(Board*, Piece, int, int, void*), void *args) {
+int Board::enumNext(bool (*callback)(Board*, Piece, int, bool, int, void*), void *args) {
 	Board *arr[ALL_PIECE_PATTERNS];
 	int first = 0, last = 0;
 	int count = 0;
@@ -330,10 +341,10 @@ int Board::enumNext(int c, bool (*callback)(Board*, Piece, int, int, void*), voi
 		last += ALL_PIECES_COUNT[p];
 
 		// 持ち駒が残っているかどうかのチェック
-		if((c == 0 ? pieces_in_hand0 : pieces_in_hand1) >> p * 4 & 7) {
+		if((turn ? pieces_in_hand1 : pieces_in_hand0) >> p * 4 & 7) {
 			for(int i = first; i < last; i++) {
 				// 置けるかどうかのチェック
-				if(b -> put(ALL_PIECES[i], c)) {
+				if(b -> put(ALL_PIECES[i], (turn ? 1 : 0))) {
 					int t = b -> normalize();
 
 					// 重複チェック
@@ -348,7 +359,7 @@ int Board::enumNext(int c, bool (*callback)(Board*, Piece, int, int, void*), voi
 					// コールバック関数を呼び出し
 					// 引数 … 盤面、置いた駒 (正規化前)、置いた駒の通し番号 (正規化前)、正規化時の反転フラグ
 					// NOTE: 盤面のインスタンスはコールバック先で削除する
-					bool ret = (*callback)(b, ALL_PIECES[i], i, t, args);
+					bool ret = (*callback)(b, ALL_PIECES[i], i, b -> judge(turn), t, args);
 					if(!ret) { for(int i = 0; i < count; i++) { delete arr[i]; } return count; } // 戻り値が false の場合はそこで列挙処理終了
 
 					b = clone(); // 作業用のインスタンスをもうひとつ作成
@@ -364,7 +375,7 @@ int Board::enumNext(int c, bool (*callback)(Board*, Piece, int, int, void*), voi
 }
 
 // 勝利判定
-bool Board::judge(int turn) {
+bool Board::judge(bool turn) {
 	t_color board = board0 & (turn ? color : ~color); // プレーヤの駒が置かれている場所
 
 	// 縦方向チェック (最下段に 1 つ以上ある場合のみ)
@@ -504,12 +515,12 @@ void Board::test() {
 	/*
 	// 合法手を列挙
 	struct test {
-		static bool callback(Board *b, Piece p, int index, int turn, void *args) {
+		static bool callback(Board *b, Piece p, int index, bool judge, int turn, void *args) {
 			b -> output();
 			delete b;
 			return true;
 		};
 	};
-	printf("%d patterns\n", enumNext(0, &test::callback));
+	printf("%d patterns\n", enumNext(&test::callback, NULL));
 	*/
 }
