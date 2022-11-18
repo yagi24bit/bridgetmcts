@@ -197,7 +197,7 @@ bool Board::put(int type, int dir, int y, int x, int c) {
 
 // 駒を盤面に配置 (棋譜形式)
 bool Board::put(char *s, int c) {
-		if(s == NULL || strlen(s) < 4) { return false; }
+	if(s == nullptr || strlen(s) < 4) { return false; }
 
 	int type, dir; // 種類, 向き
 	int y = s[0] - '1', x = s[1] - '1'; // X 座標, Y 座標
@@ -230,7 +230,7 @@ bool Board::put(char *s, int c) {
 		default:            return false;
 	}
 
-	put(type, dir, y, x, c);
+	return put(type, dir, y, x, c);
 }
 
 // 手番を交代
