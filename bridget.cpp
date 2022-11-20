@@ -6,6 +6,5 @@ int main(int argc, char *argv[]) {
 	Board *b = new Board();
 	TreeNode *t1 = new TreeNode(b);
 	t1 -> test();
-
-	delete b;
+	delete t1;
 }

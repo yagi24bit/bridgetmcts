@@ -26,7 +26,8 @@ protected:
 	int selectCount[NEXT_BOARDS]; // 子ノードを選択した回数
 
 	static bool staticEnumNextCallback(Board *b, Piece p, int pindex, bool judge, int tflag, void *args);
-	bool enumNextCallback(Board *b, Piece p, int pindex, bool judge, int tflag, void *args);
+	bool enumNextCallback(Board *b, Piece p, int pindex, bool judge, int tflag);
+	void deleteChildNodes();
 
 public:
 	TreeNode(Board *b);

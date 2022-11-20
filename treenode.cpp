@@ -18,42 +18,49 @@ TreeNode::TreeNode(Board *b) {
 }
 
 TreeNode::~TreeNode() {
+	deleteChildNodes();
 	delete board;
 }
 
 bool TreeNode::staticEnumNextCallback(Board *b, Piece p, int pindex, bool judge, int tflag, void *args) {
 	TreeNode *_this = (TreeNode*)args;
-	return _this -> enumNextCallback(b, p, pindex, judge, tflag, args);
+	return _this -> enumNextCallback(b, p, pindex, judge, tflag);
 }
 
-bool TreeNode::enumNextCallback(Board *b, Piece p, int pindex, bool judge, int tflag, void *args) {
+bool TreeNode::enumNextCallback(Board *b, Piece p, int pindex, bool judge, int tflag) {
+	bool ret = true;
+
 	if(judge) {
-		// 勝利局面
-		for(int i = 0; i < nextCount; i++) { if(--(nextNode[i] -> refCount) == 0) { map.erase(*nextNode[i] -> board); delete nextNode[i]; } } // これまでのノードを全て削除
-		nextNode[0] = new TreeNode(b);
-		nextPiece[0] = p;
-		nextPieceIndex[0] = pindex;
-		turnFlag[0] = tflag;
-		selectCount[0] = 0;
-		nextCount = 1;
-		return false; // 勝ち局面の場合は探索を中断
-	} else {
-		// 勝利局面以外
-		if(map.count(*b) > 0) {
-			nextNode[nextCount] = map[*b]; // 既に見つかっているノードのポインタを格納
-			nextNode[nextCount] -> refCount++;
-		} else {
-			TreeNode *newtree = new TreeNode(b);
-			nextNode[nextCount] = newtree; // 新しいノードを作成してポインタを格納
-			map[*b] = newtree;
-		}
-		nextPiece[nextCount] = p;
-		nextPieceIndex[nextCount] = pindex;
-		turnFlag[nextCount] = tflag;
-		selectCount[nextCount] = 0;
-		nextCount++;
-		return true;
+		deleteChildNodes(); // 勝利局面を見つけたら、それ以外のノードを全て削除 (NOTE: nodeCount = 0 になる)
+		ret = false;
 	}
+
+	if(map.count(*b) > 0) {
+		nextNode[nextCount] = map[*b]; // 既に見つかっているノードのポインタを格納
+		nextNode[nextCount] -> refCount++;
+	} else {
+		TreeNode *newtree = new TreeNode(b);
+		nextNode[nextCount] = newtree; // 新しいノードを作成してポインタを格納
+		map[*b] = newtree;
+	}
+	nextPiece[nextCount] = p;
+	nextPieceIndex[nextCount] = pindex;
+	turnFlag[nextCount] = tflag;
+	selectCount[nextCount] = 0;
+	nextCount++;
+
+	return ret; // 勝利局面の場合は探索を中断、それ以外の場合は継続
+}
+
+void TreeNode::deleteChildNodes() {
+	for(int i = 0; i < nextCount; i++) {
+		if(--(nextNode[i] -> refCount) == 0) {
+			map.erase(*nextNode[i] -> board);
+			delete nextNode[i];
+		}
+	}
+
+	nextCount = 0;
 }
 
 void TreeNode::expand() {
@@ -66,11 +73,7 @@ void TreeNode::expand() {
 	if(count == 0) {
 		Board *b = new Board(*board);
 		b -> changeTurn();
-		nextNode[0] = new TreeNode(b);
-		nextPiece[0] = {0, 0, 0};
-		nextPieceIndex[0] = -1;
-		turnFlag[0] = 0;
-		nextCount = 1;
+		enumNextCallback(b, {0, 0, 0, 0}, -1, false, 0);
 	}
 
 	// TODO: 先手・後手ともに 0 件の場合はステイルメイト判定

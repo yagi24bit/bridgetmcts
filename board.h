@@ -46,7 +46,7 @@ public:
 	void flipv(); // 上下反転
 	void flipxy(); // XY 軸反転
 	int normalize(); // 正規化
-	int enumNext(bool (*callback)(Board*, Piece, int, bool, int, void*), void *args); // 合法手を列挙
+	int enumNext(bool (*callback)(Board*, Piece, int, bool, int, void*), void *args = nullptr); // 合法手を列挙
 	bool judge(bool turn); // 勝敗判定
 	int judgeStalemate(); // ステイルメイト判定
 

@@ -521,6 +521,6 @@ void Board::test() {
 			return true;
 		};
 	};
-	printf("%d patterns\n", enumNext(&test::callback, NULL));
+	printf("%d patterns\n", enumNext(&test::callback));
 	*/
 }
