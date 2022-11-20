@@ -101,7 +101,7 @@ int TreeNode::select() {
 		double logn = log(totalCount);
 		for(int i = 0; i < nextCount; i++) {
 			TreeNode *next = nextNode[i];
-			double score = (next -> totalCount == 0 ? 0 : next -> winCount / next -> totalCount) + sqrt(2.0 * logn / selectCount[i]);
+			double score = (next -> totalCount == 0 ? 0.0 : (double)next -> winCount / next -> totalCount) + sqrt(2.0 * logn / selectCount[i]);
 			if(max < score) {
 				max = score;
 				tempIndex[0] = i;
