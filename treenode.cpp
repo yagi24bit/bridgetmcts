@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <limits.h>
 #include <math.h>
 #include "treenode.h"
 #include "xorshift.h"
@@ -10,6 +11,9 @@ TreeNode::TreeNode(Board *b) {
 	indexNumber = __atomic_fetch_add(&count, 1, __ATOMIC_ACQ_REL);
 	board = b;
 	refCount = 1;
+
+	result = RESULT_UNKNOWN;
+	steps = INT_MAX;
 	totalCount = 0;
 	winCount = 0;
 
@@ -33,6 +37,8 @@ bool TreeNode::enumNextCallback(Board *b, Piece p, int pindex, bool judge, int t
 	if(judge) {
 		deleteChildNodes(); // 勝利局面を見つけたら、それ以外のノードを全て削除 (NOTE: nodeCount = 0 になる)
 		ret = false;
+		result = RESULT_WIN;
+		steps = 1;
 	}
 
 	if(map.count(*b) > 0) {
@@ -42,6 +48,7 @@ bool TreeNode::enumNextCallback(Board *b, Piece p, int pindex, bool judge, int t
 		TreeNode *newtree = new TreeNode(b);
 		nextNode[nextCount] = newtree; // 新しいノードを作成してポインタを格納
 		map[*b] = newtree;
+		if(judge) { newtree -> result = RESULT_LOSE; newtree -> steps = 0; }
 	}
 	nextPiece[nextCount] = p;
 	nextPieceIndex[nextCount] = pindex;
@@ -86,11 +93,13 @@ int TreeNode::select() {
 	if(!isExpanded) { expand(); }
 	totalCount++;
 
-	if(nextCount == 1) {
-		// 1 手しか無い場合は固定
-		selectCount[0]++;
-		return 0;
-	} else if(totalCount < nextCount) {
+	if(nextCount == 1) { selectCount[0]++; return 0; } // 1 手しか無い場合は固定
+	switch(result) {
+		case RESULT_WIN: return selectWhenWin(); // 勝ち局面の場合は別メソッドで処理
+		case RESULT_LOSE: return selectWhenLose(); // 負け局面の場合は別メソッドで処理
+	}
+
+	if(totalCount < nextCount) {
 		// 試していない局面がある場合、試していないノードを候補に加える
 		for(int i = 0; i < nextCount; i++) {
 			if(selectCount[i] == 0) { tempIndex[tempCount++] = i; }
@@ -101,6 +110,11 @@ int TreeNode::select() {
 		double logn = log(totalCount);
 		for(int i = 0; i < nextCount; i++) {
 			TreeNode *next = nextNode[i];
+			// 負け局面 (次の手番の勝ち局面) は候補に加えない
+			if(next -> result == RESULT_WIN) { continue; }
+			// 勝ち局面 (次の手番の負け局面) を見つけたら、別メソッドで処理
+			if(next -> result == RESULT_LOSE) { result = RESULT_WIN; return selectWhenWin(i); }
+
 			double score = (next -> totalCount == 0 ? 0.0 : (double)next -> winCount / next -> totalCount) + sqrt(2.0 * logn / selectCount[i]);
 			if(max < score) {
 				max = score;
@@ -112,8 +126,47 @@ int TreeNode::select() {
 		}
 	}
 
+	// 負け局面 (次の手番の勝ち局面) しか無い場合、別メソッドで処理
+	if(tempCount == 0) { result = RESULT_LOSE; return selectWhenLose(); }
+
 	// 候補の中からランダムに 1 つを選択
 	int idx = tempIndex[XorShift::xor128() % tempCount];
+	selectCount[idx]++;
+	return idx;
+}
+
+// 勝ち局面 (次の手番の負け局面) のうち、手数が最小の手を返す
+// NOTE: 次の局面のうち 1 つ以上は result == RESULT_LOSE である前提
+// NOTE: 同手数の勝ち方が複数ある場合、最初に見つかったものを採用 (ランダム選択はしない)
+int TreeNode::selectWhenWin(int offset) {
+	int idx = offset;
+	int min = INT_MAX;
+	for(int i = offset; i < nextCount; i++) {
+		if(nextNode[i] -> result == RESULT_LOSE && min > nextNode[i] -> steps) {
+			min = nextNode[i] -> steps;
+			idx = i;
+		}
+	}
+
+	if(steps > min + 1) { steps = min + 1; } // steps 更新
+	selectCount[idx]++;
+	return idx;
+}
+
+// 負け局面 (次の手番の勝ち局面) のうち、手数が最大の手を返す
+// NOTE: 次の局面が全て result == RESULT_WIN である前提
+// NOTE: 同手数の負け方が複数ある場合、最初に見つかったものを採用 (ランダム選択はしない)
+int TreeNode::selectWhenLose() {
+	int idx = 0;
+	int max = 0;
+	for(int i = 1; i < nextCount; i++) {
+		if(max < nextNode[i] -> steps) {
+			max = nextNode[i] -> steps;
+			idx = i;
+		}
+	}
+
+	if(steps < max + 1) { steps = max + 1; } // steps 更新
 	selectCount[idx]++;
 	return idx;
 }

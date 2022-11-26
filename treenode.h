@@ -6,6 +6,13 @@
 
 #define NEXT_BOARDS ALL_PIECE_PATTERNS // TODO: 減らせるかどうか検討
 
+enum Result {
+	RESULT_UNKNOWN = 0,
+	RESULT_WIN,
+	RESULT_DRAW,
+	RESULT_LOSE
+};
+
 class TreeNode {
 protected:
 	static unsigned int count;
@@ -21,6 +28,9 @@ protected:
 	int nextPieceIndex[NEXT_BOARDS]; // 駒の置き方の通し番号
 	int turnFlag[NEXT_BOARDS]; // 回転フラグ
 
+	Result result; // 勝敗 (手番側)
+	int steps; // 勝ち局面の場合は最短手数、負け局面の場合は最長手数
+
 	int totalCount; // 到達回数
 	int winCount; // 勝利回数 (手番側)
 	int selectCount[NEXT_BOARDS]; // 子ノードを選択した回数
@@ -35,6 +45,8 @@ public:
 
 	void expand();
 	int select();
+	int selectWhenWin(int offset = 0);
+	int selectWhenLose();
 
 	void test();
 };
