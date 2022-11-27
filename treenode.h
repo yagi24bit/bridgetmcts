@@ -47,6 +47,7 @@ public:
 	int select();
 	int selectWhenWin(int offset = 0);
 	int selectWhenLose();
+	void rollout();
 
 	void test();
 };

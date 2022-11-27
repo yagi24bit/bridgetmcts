@@ -4,6 +4,7 @@
 #include "treenode.h"
 #include "xorshift.h"
 
+#define MAX_DEPTH 64
 unsigned int TreeNode::count;
 std::unordered_map<Board, TreeNode*> TreeNode::map;
 
@@ -82,8 +83,6 @@ void TreeNode::expand() {
 		b -> changeTurn();
 		enumNextCallback(b, {0, 0, 0, 0}, -1, false, 0);
 	}
-
-	// TODO: 先手・後手ともに 0 件の場合はステイルメイト判定
 }
 
 int TreeNode::select() {
@@ -171,6 +170,47 @@ int TreeNode::selectWhenLose() {
 	return idx;
 }
 
+void TreeNode::rollout() {
+	int index[MAX_DEPTH];
+	int depth = 0;
+	TreeNode *current = this;
+	TreeNode *treenode[MAX_DEPTH];
+
+	treenode[0] = current;
+	while(depth < MAX_DEPTH) {
+		int idx = current -> select();
+		index[depth] = idx;
+		depth++;
+		current = current -> nextNode[idx];
+		treenode[depth] = current;
+
+		// ステイルメイト判定
+		// NOTE: 2 連続でパスすると同一局面に戻るため、current == treenode[depth] == treenode[depth - 2] になる
+		if(depth >= 2 && current == treenode[depth - 2]) {
+			int judge = current -> board -> judgeStalemate() * ((depth % 1) ? -1 : 1);
+			current -> result = (judge == 1 ? RESULT_WIN : judge == -1 ? RESULT_LOSE : RESULT_DRAW);
+
+			current -> deleteChildNodes(); // NOTE: このままだとループしてしまうので、不要な子ノード ( treenode[depth - 1] ) を削除
+			depth -= 2;
+			break;
+		}
+
+		// 勝敗判定
+		if(current -> result == RESULT_LOSE) {
+			if(current -> steps == 0 && depth >= 2 && treenode[depth - 2] -> nextCount > 1 && treenode[depth - 2] -> totalCount <= treenode[depth - 2] -> nextCount) {
+				// ランダム選択した直後に王手放置で負けた場合「待った」をする
+				depth -= 2;
+				current = treenode[depth];
+				continue;
+			} else {
+				break; // 「待った」をしない場合は終局
+			}
+		}
+	}
+
+	// TODO: 勝利数と result を上のノードに伝搬
+}
+
 void TreeNode::test() {
 	/*
 	// expand のテスト
@@ -199,6 +239,7 @@ void TreeNode::test() {
 	printf("%s\n", (nextNode[7] -> nextNode[680] -> nextNode[837] == nextNode[148] -> nextNode[680] -> nextNode[4] ? "OK" : "NG"));
 	*/
 
+	/*
 	// 勝利局面を見つけたときのテスト
 	expand();
 	// 11PE → 17O → 21LE → 14LS → 14PE
@@ -215,4 +256,7 @@ void TreeNode::test() {
 	// 11PE → 17O → 21LE → 14LS の子ノードは 28JN の局面 1 つだけ
 	printf("%s\n", (nextNode[42] -> nextNode[712] -> nextNode[287] -> nextNode[35] -> nextCount == 1 ? "OK" : "NG"));
 	nextNode[42] -> nextNode[712] -> nextNode[287] -> nextNode[35] -> nextNode[0] -> board -> output();
+	*/
+
+	rollout();
 }
