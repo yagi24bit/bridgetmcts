@@ -32,6 +32,7 @@ protected:
 	int steps; // 勝ち局面の場合は最短手数、負け局面の場合は最長手数
 
 	int totalCount; // 到達回数
+	int totalCountOrig; // 到達回数 (「待った」の回数も含む)
 	int winCount; // 勝利回数 (手番側)
 	int selectCount[NEXT_BOARDS]; // 子ノードを選択した回数
 

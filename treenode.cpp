@@ -91,6 +91,7 @@ int TreeNode::select() {
 
 	if(!isExpanded) { expand(); }
 	totalCount++;
+	totalCountOrig++;
 
 	if(nextCount == 1) { selectCount[0]++; return 0; } // 1 手しか無い場合は固定
 	switch(result) {
@@ -98,7 +99,7 @@ int TreeNode::select() {
 		case RESULT_LOSE: return selectWhenLose(); // 負け局面の場合は別メソッドで処理
 	}
 
-	if(totalCount < nextCount) {
+	if(totalCountOrig < nextCount) {
 		// 試していない局面がある場合、試していないノードを候補に加える
 		for(int i = 0; i < nextCount; i++) {
 			if(selectCount[i] == 0) { tempIndex[tempCount++] = i; }
@@ -197,10 +198,12 @@ void TreeNode::rollout() {
 
 		// 勝敗判定
 		if(current -> result == RESULT_LOSE) {
-			if(current -> steps == 0 && depth >= 2 && treenode[depth - 2] -> nextCount > 1 && treenode[depth - 2] -> totalCount <= treenode[depth - 2] -> nextCount) {
+			if(current -> steps == 0 && depth >= 2 && treenode[depth - 2] -> nextCount > 1 && treenode[depth - 2] -> totalCountOrig <= treenode[depth - 2] -> nextCount) {
 				// ランダム選択した直後に王手放置で負けた場合「待った」をする
+				treenode[depth - 1] -> totalCount--;
 				depth -= 2;
 				current = treenode[depth];
+				current -> totalCount--;
 				continue;
 			} else {
 				break; // 「待った」をしない場合は終局
