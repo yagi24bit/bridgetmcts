@@ -148,7 +148,7 @@ int TreeNode::selectWhenWin(int offset) {
 		}
 	}
 
-	if(steps > min + 1) { steps = min + 1; } // steps 更新
+	steps = min + 1; // steps 更新
 	selectCount[idx]++;
 	return idx;
 }
@@ -166,7 +166,7 @@ int TreeNode::selectWhenLose() {
 		}
 	}
 
-	if(steps < max + 1) { steps = max + 1; } // steps 更新
+	steps = max + 1; // steps 更新
 	selectCount[idx]++;
 	return idx;
 }
@@ -190,6 +190,7 @@ void TreeNode::rollout() {
 		if(depth >= 2 && current == treenode[depth - 2]) {
 			int judge = current -> board -> judgeStalemate() * ((depth % 1) ? -1 : 1);
 			current -> result = (judge == 1 ? RESULT_WIN : judge == -1 ? RESULT_LOSE : RESULT_DRAW);
+			if(judge != 0) { current -> steps = 0; }
 
 			current -> deleteChildNodes(); // NOTE: このままだとループしてしまうので、不要な子ノード ( treenode[depth - 1] ) を削除
 			depth -= 2;
