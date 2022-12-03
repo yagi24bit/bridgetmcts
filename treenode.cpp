@@ -212,7 +212,26 @@ void TreeNode::rollout() {
 		}
 	}
 
-	// TODO: 勝利数と result を上のノードに伝搬
+	// 勝利数と勝敗を上のノードに反映
+	int winCountArr[2] = {0, 0};
+	if(current -> result == RESULT_WIN) { winCountArr[depth & 1] = 1; } else if(current -> result == RESULT_LOSE) { winCountArr[(depth + 1) & 1] = 1; }
+	for(int i = depth - 1; i > 0; i--) {
+		TreeNode *cur = treenode[i]; // current node
+		TreeNode *par = treenode[i - 1]; // parent node
+
+		// 勝利数
+		cur -> winCount += winCountArr[i & 1];
+
+		// 勝敗・手数
+		if(cur -> result == RESULT_LOSE) {
+			par -> result = RESULT_WIN;
+			if(par -> steps > cur -> steps + 1) { par -> steps = cur -> steps + 1; }
+		} else if(cur -> result == RESULT_WIN && par -> nextCount == 1) {
+			par -> result = RESULT_LOSE;
+			if(par -> steps < cur -> steps + 1) { par -> steps = cur -> steps + 1; }
+		}
+	}
+	treenode[0] -> winCount += winCountArr[0];
 }
 
 void TreeNode::test() {
@@ -262,5 +281,32 @@ void TreeNode::test() {
 	nextNode[42] -> nextNode[712] -> nextNode[287] -> nextNode[35] -> nextNode[0] -> board -> output();
 	*/
 
+	// rollout のテスト
 	rollout();
+	TreeNode *current = this;
+	int depth = 0;
+	while(1) {
+		printf("depth : %d\n", depth);
+		printf(
+			"result : %s (steps : %d), win : (%d / %d(%d))\n",
+			(current -> result == RESULT_WIN ? "WIN" : current -> result == RESULT_LOSE ? "LOSE" : current -> result == RESULT_DRAW ? "DRAW" : "UNKNOWN"),
+			(current -> result == RESULT_WIN || current -> result == RESULT_LOSE ? current -> steps : -1),
+			current -> winCount,
+			current -> totalCount,
+			current -> totalCountOrig
+		);
+		current -> board -> output();
+
+		bool found = false;
+		for(int i = 0; i < current -> nextCount; i++) {
+			if(current -> nextNode[i] -> totalCount > 0 || current -> nextNode[i] -> steps == 0) {
+				found = true;
+				printf("nextIndex : (%d / %d), pindex : %d\n\n", i, current -> nextCount, current -> nextPieceIndex[i]);
+				current = current -> nextNode[i];
+				depth++;
+				break;
+			}
+		}
+		if(!found) { break; }
+	}
 }
