@@ -285,6 +285,7 @@ void TreeNode::test() {
 	rollout();
 	TreeNode *current = this;
 	int depth = 0;
+	int tflag = 0;
 	while(1) {
 		printf("depth : %d\n", depth);
 		printf(
@@ -295,13 +296,14 @@ void TreeNode::test() {
 			current -> totalCount,
 			current -> totalCountOrig
 		);
-		current -> board -> output();
+		current -> board -> output(tflag);
 
 		bool found = false;
 		for(int i = 0; i < current -> nextCount; i++) {
 			if(current -> nextNode[i] -> totalCount > 0 || current -> nextNode[i] -> steps == 0) {
 				found = true;
 				printf("nextIndex : (%d / %d), pindex : %d\n\n", i, current -> nextCount, current -> nextPieceIndex[i]);
+				tflag = Board::calcTurnFlag(tflag, current -> turnFlag[i]);
 				current = current -> nextNode[i];
 				depth++;
 				break;

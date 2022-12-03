@@ -107,7 +107,7 @@ bool Board::equals(Board *b) const {
 	);
 }
 
-// デバッグ出力
+// コンソール出力
 void Board::output() {
 	const char *block[] = {" . ", "[1]", "[2]", "[3]", " . ", "<1>", "<2>", "<3>"};
 	const char *number[] = {"   ", " 1 ", " 2 ", " 3 ", " 4 ", " 5 ", " 6 ", " 7 ", " 8 "};
@@ -154,6 +154,18 @@ void Board::output() {
 	printf("(%d, %d, %d, %d), ", pieces_in_hand0 & 7, pieces_in_hand0 >> 4 & 7, pieces_in_hand0 >> 8 & 7, pieces_in_hand0 >> 12 & 7);
 	printf("(%d, %d, %d, %d)\n", pieces_in_hand1 & 7, pieces_in_hand1 >> 4 & 7, pieces_in_hand1 >> 8 & 7, pieces_in_hand1 >> 12 & 7);
 	printf("\n");
+}
+
+// コンソール出力 (正規化前に戻してから出力)
+void Board::output(int tflag) {
+	Board *b = clone();
+
+	if(tflag & 1) { b -> fliph(); } // 左右反転
+	if(tflag & 2) { b -> flipv(); } // 上下反転
+	if(tflag & 4) { b -> flipxy(); } // XY 軸反転
+	b -> output();
+
+	delete b;
 }
 
 // 駒を盤面に配置
@@ -309,7 +321,7 @@ int Board::normalize() {
 					board1_min = board1;
 					board2_min = board2;
 					color_min = color;
-					ret = z << 2 | y << 1 | x;
+					ret = z << 2 | y << 1 | x; // 回転フラグ (NOTE: 下位ビットから順に、左右反転、上下反転、XY 軸反転)
 				}
 
 				fliph();
@@ -326,6 +338,19 @@ int Board::normalize() {
 	color = color_min;
 
 	return ret;
+}
+
+// 回転フラグを計算
+int Board::calcTurnFlag(int current, int tflag) {
+	// XY 軸反転 (3 ビット目を反転、1～2 ビット目を入れ替え)
+	if(tflag & 4) {
+		current = (current & 4 ^ 4) | (current >> 1 & 1) | (current << 1 & 2);
+	}
+
+	// 上下・左右反転 (1～2 ビット目を反転)
+	current ^= tflag & 3;
+
+	return current;
 }
 
 // 合法手を列挙
