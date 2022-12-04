@@ -33,7 +33,7 @@ public:
 	void output(); // コンソール出力
 	void output(int tflag); // コンソール出力 (正規化前に戻してから出力)
 	bool put(Piece p, int c); // 駒を盤面に配置
-	bool put(int type, int dir, int x, int y, int c); // 駒を盤面に配置 (種類と座標指定)
+	bool put(int y, int x, int type, int dir, int c); // 駒を盤面に配置 (種類と座標指定)
 	bool put(char *s, int c); // 駒を盤面に配置 (棋譜形式)
 	void changeTurn(); // 手番を交代
 	void fliph(); // 左右反転

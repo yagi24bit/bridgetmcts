@@ -138,7 +138,7 @@ bool Board::put(Piece p, int c) {
 }
 
 // 駒を盤面に配置 (種類と座標指定)
-bool Board::put(int type, int dir, int y, int x, int c) {
+bool Board::put(int y, int x, int type, int dir, int c) {
 	Piece p = Piece::get(y, x, type, dir);
 	if(p.isEmpty()) { return false; }
 
