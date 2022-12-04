@@ -4,7 +4,7 @@ all: piece.o board.o treenode.o xorshift.o bridget.exe
 
 
 piece.o: piece.h piece.cpp
-	g++ -c -o piece.o piece.cpp
+	g++ -std=c++11 -c -o piece.o piece.cpp
 
 board.o: board.h board.cpp piece.o
 	g++ -std=c++11 -c -o board.o board.cpp

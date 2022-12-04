@@ -8,8 +8,6 @@
 #define BOARD_Y  8
 #define BOARD_HEIGHT 3
 
-#define ALL_PIECE_PATTERNS 2497
-
 typedef unsigned long long int t_board; // ブロックの有無
 typedef unsigned long long int t_color; // ブロックの色
 
@@ -20,9 +18,6 @@ protected:
 	t_board board0, board1, board2; // ブロックの有無 (それぞれ 1 段目・2 段目・3 段目)
 	t_color color; // 真上から見たときの色
 
-	static Piece ALL_PIECES[ALL_PIECE_PATTERNS];
-	static int ALL_PIECES_INDEX[PIECE_PUT_TYPES][4][BOARD_Y][BOARD_X];
-
 	t_board fliph1(t_board b); // 左右反転 (1 変数)
 	t_board flipv1(t_board b); // 上下反転 (1 変数)
 	t_board flipxy1(t_board b); // XY 軸反転 (1 変数)
@@ -31,8 +26,6 @@ public:
 	Board(); // コンストラクタ
 	Board(const Board &board); // コピーコンストラクタ
 	~Board(); // デストラクタ
-
-	static void initializeAllPieces();
 
 	Board *clone(); // 自身のコピーインスタンスを作成
 	void copyTo(Board *b); // コピー

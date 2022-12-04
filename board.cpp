@@ -1,10 +1,5 @@
 #include <stdio.h>
-#include <string.h>
 #include "board.h"
-
-Piece Board::ALL_PIECES[ALL_PIECE_PATTERNS];
-int Board::ALL_PIECES_INDEX[PIECE_PUT_TYPES][4][BOARD_Y][BOARD_X];
-const int ALL_PIECES_COUNT[] = {1168, 161, 584, 584};
 
 // コンストラクタ
 Board::Board() {
@@ -24,58 +19,6 @@ Board::Board(const Board &b) : turn(b.turn), board0(b.board0), board1(b.board1),
 
 // デストラクタ
 Board::~Board() {
-}
-
-void Board::initializeAllPieces() {
-	// 初期化
-	memset(ALL_PIECES, 0, sizeof(Piece) * ALL_PIECE_PATTERNS);
-	memset(ALL_PIECES_INDEX, (unsigned char)0xFF, sizeof(int) * PIECE_PUT_TYPES * 4 * BOARD_Y * BOARD_X);
-
-	int index = 0;
-	for(int t = 0; t < PIECE_PUT_TYPES; t++) {
-		for(int d = 0; d < 4; d++) {
-			Piece p = DEFAULT_PIECES[t][d];
-			if((p.piece0 | p.piece1 | p.piece2) == 0ull) { continue; }
-
-			// まずできるだけ原点に近い方向にスライド
-			int x = DEFAULT_PIECES_X;
-			while((p.piece0 & 0x0101010101010101ull | p.piece1 & 0x0101010101010101ull | p.piece2 & 0x0101010101010101ull) == 0) {
-				x--;
-				p.piece0 >>= 1; p.piece1 >>= 1; p.piece2 >>= 1;
-			}
-			int y = DEFAULT_PIECES_Y;
-			while((p.piece0 & 0x00000000000000FFull | p.piece1 & 0x00000000000000FFull | p.piece2 & 0x00000000000000FFull) == 0) {
-				y--;
-				p.piece0 >>= BOARD_X; p.piece1 >>= BOARD_X; p.piece2 >>= BOARD_X;
-			}
-
-			// 1 升ずつスライドしながら ALL_PIECES に代入
-			while(true) {
-				Piece p_temp = p;
-				int x_temp = x;
-
-				while(true) {
-					ALL_PIECES_INDEX[t][d][y][x_temp] = index;
-					ALL_PIECES[index] = p_temp;
-					index++;
-
-					if((p_temp.piece0 | p_temp.piece1 | p_temp.piece2) & 0x8080808080808080ull) { break; }
-					// p_temp を x 方向にスライド
-					p_temp.piece0 <<= 1;
-					p_temp.piece1 <<= 1;
-					p_temp.piece2 <<= 1;
-					x_temp++;
-				}
-
-				if((p.piece0 | p.piece1 | p.piece2) & 0xFF00000000000000ull) { break; }
-				// p を y 方向にスライド
-				p.piece0 <<= BOARD_X;
-				p.piece1 <<= BOARD_X;
-				p.piece2 <<= BOARD_X;
-				y++;
-			}
-		}
-	}
 }
 
 // 自身のコピーインスタンスを作成
@@ -196,53 +139,18 @@ bool Board::put(Piece p, int c) {
 
 // 駒を盤面に配置 (種類と座標指定)
 bool Board::put(int type, int dir, int y, int x, int c) {
-	if(type < 0 || type >= PIECE_PUT_TYPES) { return false; }
-	if(dir < 0 || dir >= 4) { return false; }
-	if(x < 0 || x >= BOARD_X) { return false; }
-	if(y < 0 || y >= BOARD_Y) { return false; }
+	Piece p = Piece::get(y, x, type, dir);
+	if(p.isEmpty()) { return false; }
 
-	int i = ALL_PIECES_INDEX[type][dir][y][x];
-	if(i == -1) { return false; }
-
-	return put(ALL_PIECES[i], c);
+	return put(p, c);
 }
 
 // 駒を盤面に配置 (棋譜形式)
 bool Board::put(char *s, int c) {
-	if(s == nullptr || strlen(s) < 4) { return false; }
+	Piece p = Piece::get(s);
+	if(p.isEmpty()) { return false; }
 
-	int type, dir; // 種類, 向き
-	int y = s[0] - '1', x = s[1] - '1'; // X 座標, Y 座標
-
-	switch(s[2]) {
-		case 'L': case 'l': type =  0; break;
-		case 'J': case 'j': type =  1; break;
-		case 'P': case 'p': type =  2; break;
-		case 'H': case 'h': type =  3; break;
-		case 'B': case 'b': type =  4; break;
-		case 'C': case 'c': type =  5; break;
-		case 'O': case 'o': type =  6; break;
-		case 'W': case 'w': type =  7; break;
-		case 'S': case 's': type =  8; break;
-		case 'Z': case 'z': type =  9; break;
-		case 'D': case 'd': type = 10; break;
-		case 'A': case 'a': type = 11; break;
-		case 'T': case 't': type = 12; break;
-		case 'V': case 'v': type = 13; break;
-		case 'U': case 'u': type = 14; break;
-		case 'G': case 'g': type = 15; break;
-		default:            return false;
-	}
-
-	switch(s[3]) {
-		case 'E': case 'e': dir = 0; break;
-		case 'S': case 's': dir = 1; break;
-		case 'W': case 'w': dir = 2; break;
-		case 'N': case 'n': dir = 3; break;
-		default:            return false;
-	}
-
-	return put(type, dir, y, x, c);
+	return put(p, c);
 }
 
 // 手番を交代
@@ -363,13 +271,13 @@ int Board::enumNext(bool (*callback)(Board*, Piece, int, bool, int, void*), void
 
 	for(int p = 0; p < PIECE_TYPES; p++) {
 		first = last;
-		last += ALL_PIECES_COUNT[p];
+		last += Piece::getNumberOfPieces(p);;
 
 		// 持ち駒が残っているかどうかのチェック
 		if((turn ? pieces_in_hand1 : pieces_in_hand0) >> p * 4 & 7) {
 			for(int i = first; i < last; i++) {
 				// 置けるかどうかのチェック
-				if(b -> put(ALL_PIECES[i], (turn ? 1 : 0))) {
+				if(b -> put(Piece::get(i), (turn ? 1 : 0))) {
 					int t = b -> normalize();
 
 					// 重複チェック
@@ -384,7 +292,7 @@ int Board::enumNext(bool (*callback)(Board*, Piece, int, bool, int, void*), void
 					// コールバック関数を呼び出し
 					// 引数 … 盤面、置いた駒 (正規化前)、置いた駒の通し番号 (正規化前)、正規化時の反転フラグ
 					// NOTE: 盤面のインスタンスはコールバック先で削除する
-					bool ret = (*callback)(b, ALL_PIECES[i], i, b -> judge(turn), t, args);
+					bool ret = (*callback)(b, Piece::get(i), i, b -> judge(turn), t, args);
 					if(!ret) { for(int i = 0; i < count; i++) { delete arr[i]; } return count; } // 戻り値が false の場合はそこで列挙処理終了
 
 					b = clone(); // 作業用のインスタンスをもうひとつ作成
