@@ -1,7 +1,8 @@
 #include <string.h>
 #include "piece.h"
 
-#define PIECE_EMPTY {0, 0, 0, 0}
+#define PIECE_TYPE_EMPTY 0xFF
+#define PIECE_EMPTY {PIECE_TYPE_EMPTY, 0, 0, 0}
 #define DEFAULT_PIECES_X 2
 #define DEFAULT_PIECES_Y 2
 
@@ -37,7 +38,7 @@ const int DEFAULT_PIECE_TURNS[PIECE_PUT_TYPES] = {
 };
 
 void Piece::init() {
-	EMPTY = {0, 0, 0, 0};
+	EMPTY = PIECE_EMPTY;
 
 	// 初期化
 	memset(ALL_PIECES, 0, sizeof(Piece) * ALL_PIECE_PATTERNS);
@@ -47,7 +48,7 @@ void Piece::init() {
 	for(int t = 0; t < PIECE_PUT_TYPES; t++) {
 		for(int d = 0; d < 4; d++) {
 			Piece p = DEFAULT_PIECES[t][d];
-			if((p.piece0 | p.piece1 | p.piece2) == 0ull) { continue; }
+			if(p.isEmpty()) { continue; }
 
 			// まずできるだけ原点に近い方向にスライド
 			int x = DEFAULT_PIECES_X;
@@ -91,7 +92,7 @@ void Piece::init() {
 }
 
 bool Piece::isEmpty() {
-	return (piece0 == 0 && piece1 == 0 && piece2 == 0);
+	return (type == PIECE_TYPE_EMPTY);
 }
 
 Piece Piece::get(int index) {
