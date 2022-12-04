@@ -9,6 +9,10 @@
 Piece Piece::EMPTY;
 Piece Piece::ALL_PIECES[ALL_PIECE_PATTERNS];
 int Piece::ALL_PIECES_INDEX[PIECE_PUT_TYPES][4][PIECE_Y][PIECE_X];
+int Piece::ALL_PIECES_TYPE[ALL_PIECE_PATTERNS];
+int Piece::ALL_PIECES_DIR[ALL_PIECE_PATTERNS];
+int Piece::ALL_PIECES_Y[ALL_PIECE_PATTERNS];
+int Piece::ALL_PIECES_X[ALL_PIECE_PATTERNS];
 
 // NOTE: 中心は (x, y) = (2, 2)、E→S→W→N の順
 const Piece DEFAULT_PIECES[PIECE_PUT_TYPES][4] = {
@@ -70,6 +74,10 @@ void Piece::init() {
 				while(true) {
 					ALL_PIECES_INDEX[t][d][y][x_temp] = index;
 					ALL_PIECES[index] = p_temp;
+					ALL_PIECES_TYPE[index] = t;
+					ALL_PIECES_DIR[index] = d;
+					ALL_PIECES_Y[index] = y;
+					ALL_PIECES_X[index] = x_temp;
 					index++;
 
 					if((p_temp.piece0 | p_temp.piece1 | p_temp.piece2) & 0x8080808080808080ull) { break; }
@@ -93,6 +101,25 @@ void Piece::init() {
 
 bool Piece::isEmpty() {
 	return (type == PIECE_TYPE_EMPTY);
+}
+
+bool Piece::equals(Piece p) {
+	return (
+		   piece0 == p.piece0
+		&& piece1 == p.piece1
+		&& piece2 == p.piece2
+	);
+}
+
+int Piece::getIndex() {
+	if(isEmpty()) { return -1; }
+
+	// NOTE: パフォーマンスは悪いが、呼び出される頻度が低いので気にしない
+	for(int i = 0; i < ALL_PIECE_PATTERNS; i++) {
+		if(equals(ALL_PIECES[i])) { return i; }
+	}
+
+	return -1;
 }
 
 Piece Piece::get(int index) {
@@ -150,6 +177,72 @@ int Piece::getNumberOfPieces(int type) {
 
 	const int ALL_PIECES_COUNT[] = {1168, 161, 584, 584};
 	return ALL_PIECES_COUNT[type];
+}
+
+// 反転したときの駒の種類
+const int FLIPPED_PIECE[PIECE_PUT_TYPES] = {1, 0, 2, 3, 4, 5, 6, 7, 9, 8, 10, 11, 12, 13, 14, 15}; // L と J が入れ替え、S と Z が入れ替え、それ以外はそのまま
+
+// 左右反転
+void fliph(int *y, int *x, int *type, int *dir) {
+	const int FLIPPED_DIR[4] = {2, 1, 0, 3}; // 0 と 2 が入れ替え、1 と 3 はそのまま
+
+	*x = PIECE_X - 1 - *x;
+	*type = FLIPPED_PIECE[*type];
+	*dir = FLIPPED_DIR[*dir] % DEFAULT_PIECE_TURNS[*type];
+
+	if(*type == 6 || (*type == 7 && *dir == 0)) { (*x)--; } // O と WE は X 座標を調整
+	if((*type == 8 || *type == 9) && *dir == 0) { (*x) -= 2; (*y) += (*type == 8 ? 1 : -1); } // SE と ZE は座標を調整
+}
+
+// 上下反転
+void flipv(int *y, int *x, int *type, int *dir) {
+	const int FLIPPED_DIR[4] = {0, 3, 2, 1}; // 1 と 3 が入れ替え、0 と 2 はそのまま
+
+	*y = PIECE_Y - 1 - *y;
+	*type = FLIPPED_PIECE[*type];
+	*dir = FLIPPED_DIR[*dir] % DEFAULT_PIECE_TURNS[*type];
+
+	if(*type == 6 || (*type == 7 && *dir == 1)) { (*y)--; } // O と WS は Y 座標を調整
+	if((*type == 8 || *type == 9) && *dir == 1) { (*x) += (*type == 8 ? -1 : 1); (*y) -= 2; } // SS と ZS は座標を調整
+}
+
+// XY 軸反転
+void flipxy(int *y, int *x, int *type, int *dir) {
+	int temp = *y;
+	*y = *x;
+	*x = temp;
+	*type = FLIPPED_PIECE[*type];
+	*dir = (*dir ^ 1) % DEFAULT_PIECE_TURNS[*type]; // 0 と 1 が入れ替え、2 と 3 が入れ替え
+}
+
+// 回転フラグに従って回転する
+Piece Piece::flip(int tflag) {
+	int index = getIndex();
+	int y = ALL_PIECES_Y[index];
+	int x = ALL_PIECES_X[index];
+	int type = ALL_PIECES_TYPE[index];
+	int dir = ALL_PIECES_DIR[index];
+
+	if(tflag & 4) { flipxy(&y, &x, &type, &dir); } // XY 軸反転
+	if(tflag & 2) { flipv(&y, &x, &type, &dir); } // 上下反転
+	if(tflag & 1) { fliph(&y, &x, &type, &dir); } // 左右反転
+
+	return get(y, x, type, dir);
+}
+
+// 回転した状態から元に戻す
+Piece Piece::flipInv(int tflag) {
+	int index = getIndex();
+	int y = ALL_PIECES_Y[index];
+	int x = ALL_PIECES_X[index];
+	int type = ALL_PIECES_TYPE[index];
+	int dir = ALL_PIECES_DIR[index];
+
+	if(tflag & 1) { fliph(&y, &x, &type, &dir); } // 左右反転
+	if(tflag & 2) { flipv(&y, &x, &type, &dir); } // 上下反転
+	if(tflag & 4) { flipxy(&y, &x, &type, &dir); } // XY 軸反転
+
+	return get(y, x, type, dir);
 }
 
 

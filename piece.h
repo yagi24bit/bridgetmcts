@@ -17,14 +17,22 @@ struct Piece {
 
 	static void init();
 	bool isEmpty();
+	bool equals(Piece p);
+	int getIndex();
 	static Piece get(int index);
 	static Piece get(int y, int x, int type, int dir);
 	static Piece get(char *s);
 	static int getNumberOfPieces(int type);
+	Piece flip(int tflag);
+	Piece flipInv(int tflag);
 
 protected:
 	static Piece ALL_PIECES[ALL_PIECE_PATTERNS];
 	static int ALL_PIECES_INDEX[PIECE_PUT_TYPES][4][PIECE_Y][PIECE_X];
+	static int ALL_PIECES_TYPE[ALL_PIECE_PATTERNS];
+	static int ALL_PIECES_DIR[ALL_PIECE_PATTERNS];
+	static int ALL_PIECES_Y[ALL_PIECE_PATTERNS];
+	static int ALL_PIECES_X[ALL_PIECE_PATTERNS];
 };
 
 extern const Piece DEFAULT_PIECES[PIECE_PUT_TYPES][4];
