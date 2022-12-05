@@ -245,6 +245,33 @@ Piece Piece::flipInv(int tflag) {
 	return get(y, x, type, dir);
 }
 
+// 棋譜用の文字列を取得
+bool Piece::getString(char *str) {
+	const char TYPES[16] = {'L', 'J', 'P', 'H', 'B', 'C', 'O', 'W', 'S', 'Z', 'D', 'A', 'T', 'V', 'U', 'G'};
+	const char DIRECTIONS[4] = {'E', 'S', 'W', 'N'};
+
+	if(str == nullptr) { return false; }
+	int index = getIndex();
+	if(index < 0) { return false; }
+
+	int y = ALL_PIECES_Y[index];
+	int x = ALL_PIECES_X[index];
+	int type = ALL_PIECES_TYPE[index];
+	int dir = ALL_PIECES_DIR[index];
+
+	str[0] = y + '1';
+	str[1] = x + '1';
+	str[2] = TYPES[type];
+	if(type == 6) {
+		str[3] = '\0'; // O のみ、向きが無いため省略
+	} else {
+		str[3] = DIRECTIONS[dir];
+		str[4] = '\0';
+	}
+
+	return true;
+}
+
 
 
 // 初期化処理を自動で実行

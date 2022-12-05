@@ -25,6 +25,7 @@ struct Piece {
 	static int getNumberOfPieces(int type);
 	Piece flip(int tflag);
 	Piece flipInv(int tflag);
+	bool getString(char *str);
 
 protected:
 	static Piece ALL_PIECES[ALL_PIECE_PATTERNS];

@@ -302,7 +302,11 @@ void TreeNode::test() {
 		for(int i = 0; i < current -> nextCount; i++) {
 			if(current -> nextNode[i] -> totalCount > 0 || current -> nextNode[i] -> steps == 0) {
 				found = true;
-				printf("nextIndex : (%d / %d), pindex : %d\n\n", i, current -> nextCount, current -> nextPieceIndex[i]);
+				char buf[5];
+				if(current -> nextPiece[i].flipInv(tflag).getString(buf)) {
+					printf("[%s] tflag : %d%d%d, ", buf, tflag >> 2 & 1, tflag >> 1 & 1, tflag & 1);
+					printf("nextIndex : (%d / %d), pindex : %d\n\n", i, current -> nextCount, current -> nextPieceIndex[i]);
+				}
 				tflag = Board::calcTurnFlag(tflag, current -> turnFlag[i]);
 				current = current -> nextNode[i];
 				depth++;
