@@ -323,9 +323,6 @@ bool Board::judge(bool turn) {
 		if(c & 0xff00000000000000ull) return true;
 	}
 
-	// 偶然横方向が繋がっていたらそこで探索終了
-	if((c & 0x0101010101010101ull) && (c & 0x8080808080808080ull)) return true;
-
 	// 横方向チェック (左端に 1 つ以上ある場合のみ)
 	c = 0x0000000000000000ull;
 	if(board & 0x8080808080808080ull) {
