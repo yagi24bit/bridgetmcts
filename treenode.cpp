@@ -115,7 +115,7 @@ int TreeNode::select() {
 			// 勝ち局面 (次の手番の負け局面) を見つけたら、別メソッドで処理
 			if(next -> result == RESULT_LOSE) { result = RESULT_WIN; return selectWhenWin(i); }
 
-			double score = (next -> totalCount == 0 ? 0.0 : (double)next -> winCount / next -> totalCount) + sqrt(2.0 * logn / selectCount[i]);
+			double score = (next -> totalCount == 0 ? 0.0 : (double)(next -> totalCount - next -> winCount) / next -> totalCount) + sqrt(2.0 * logn / selectCount[i]);
 			if(max < score) {
 				max = score;
 				tempIndex[0] = i;
@@ -207,6 +207,8 @@ void TreeNode::rollout() {
 				current -> totalCount--;
 				continue;
 			} else {
+				current -> totalCount++;
+				current -> totalCountOrig++;
 				break; // 「待った」をしない場合は終局
 			}
 		}
