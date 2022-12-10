@@ -112,6 +112,11 @@ void Board::output(int tflag) {
 }
 
 // 駒を盤面に配置
+bool Board::put(Piece p) {
+	return put(p, (turn ? 1 : 0));
+}
+
+// 駒を盤面に配置 (色指定)
 bool Board::put(Piece p, int c) {
 	// 既存の駒と重なる置き方は禁止
 	if(board0 & p.piece0 | board1 & p.piece1 | board2 & p.piece2) { return false; }
@@ -262,7 +267,7 @@ int Board::calcTurnFlag(int current, int tflag) {
 }
 
 // 合法手を列挙
-int Board::enumNext(bool (*callback)(Board*, Piece, int, bool, int, void*), void *args) {
+int Board::enumNext(bool (*callback)(Board*, Board*, Piece, int, bool, int, void*), void *args) {
 	Board *arr[ALL_PIECE_PATTERNS];
 	int first = 0, last = 0;
 	int count = 0;
@@ -290,9 +295,9 @@ int Board::enumNext(bool (*callback)(Board*, Piece, int, bool, int, void*), void
 					arr[count++] = b -> clone(); // コピーして重複チェック用の配列に保持
 
 					// コールバック関数を呼び出し
-					// 引数 … 盤面、置いた駒 (正規化前)、置いた駒の通し番号 (正規化前)、正規化時の反転フラグ
+					// 引数 … 現在の盤面、置いた後の盤面、置いた駒 (正規化前)、置いた駒の通し番号 (正規化前)、正規化時の反転フラグ
 					// NOTE: 盤面のインスタンスはコールバック先で削除する
-					bool ret = (*callback)(b, Piece::get(i), i, b -> judge(turn), t, args);
+					bool ret = (*callback)(this, b, Piece::get(i), i, b -> judge(turn), t, args);
 					if(!ret) { for(int i = 0; i < count; i++) { delete arr[i]; } return count; } // 戻り値が false の場合はそこで列挙処理終了
 
 					b = clone(); // 作業用のインスタンスをもうひとつ作成

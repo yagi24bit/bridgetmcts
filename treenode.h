@@ -19,7 +19,6 @@ protected:
 	static std::unordered_map<Board, TreeNode*> map; // 重複チェック用のハッシュマップ
 
 	unsigned int indexNumber; // 通し番号
-	Board *board; // 盤面
 	int refCount; // 親ノードの数
 	bool isExpanded; // 子ノードを展開済みかどうか
 	int nextCount; // 合法手の数
@@ -36,19 +35,19 @@ protected:
 	int winCount; // 勝利回数 (手番側)
 	int selectCount[NEXT_BOARDS]; // 子ノードを選択した回数
 
-	static bool staticEnumNextCallback(Board *b, Piece p, int pindex, bool judge, int tflag, void *args);
-	bool enumNextCallback(Board *b, Piece p, int pindex, bool judge, int tflag);
-	void deleteChildNodes();
+	static bool staticEnumNextCallback(Board *orig, Board *b, Piece p, int pindex, bool judge, int tflag, void *args);
+	bool enumNextCallback(Board *orig, Board *b, Piece p, int pindex, bool judge, int tflag);
+	void deleteChildNodes(Board *board);
 
 public:
-	TreeNode(Board *b);
+	TreeNode();
 	~TreeNode();
 
-	void expand();
-	int select();
+	void expand(Board *board);
+	int select(Board *board);
 	int selectWhenWin(int offset = 0);
 	int selectWhenLose();
-	void rollout();
+	void rollout(Board *board);
 
 	void test();
 };

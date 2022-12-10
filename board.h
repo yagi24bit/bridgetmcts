@@ -32,7 +32,8 @@ public:
 	bool equals(Board *b) const; // 一致判定
 	void output(); // コンソール出力
 	void output(int tflag); // コンソール出力 (正規化前に戻してから出力)
-	bool put(Piece p, int c); // 駒を盤面に配置
+	bool put(Piece p); // 駒を盤面に配置
+	bool put(Piece p, int c); // 駒を盤面に配置 (色指定)
 	bool put(int y, int x, int type, int dir, int c); // 駒を盤面に配置 (種類と座標指定)
 	bool put(char *s, int c); // 駒を盤面に配置 (棋譜形式)
 	void changeTurn(); // 手番を交代
@@ -41,7 +42,7 @@ public:
 	void flipxy(); // XY 軸反転
 	int normalize(); // 正規化
 	static int calcTurnFlag(int current, int tflag); // 回転フラグを計算
-	int enumNext(bool (*callback)(Board*, Piece, int, bool, int, void*), void *args = nullptr); // 合法手を列挙
+	int enumNext(bool (*callback)(Board*, Board*, Piece, int, bool, int, void*), void *args = nullptr); // 合法手を列挙
 	bool judge(bool turn); // 勝敗判定
 	int judgeStalemate(); // ステイルメイト判定
 

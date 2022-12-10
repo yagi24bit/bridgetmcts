@@ -8,9 +8,8 @@
 unsigned int TreeNode::count;
 std::unordered_map<Board, TreeNode*> TreeNode::map;
 
-TreeNode::TreeNode(Board *b) {
+TreeNode::TreeNode() {
 	indexNumber = __atomic_fetch_add(&count, 1, __ATOMIC_ACQ_REL);
-	board = b;
 	refCount = 1;
 
 	result = RESULT_UNKNOWN;
@@ -23,20 +22,18 @@ TreeNode::TreeNode(Board *b) {
 }
 
 TreeNode::~TreeNode() {
-	deleteChildNodes();
-	delete board;
 }
 
-bool TreeNode::staticEnumNextCallback(Board *b, Piece p, int pindex, bool judge, int tflag, void *args) {
+bool TreeNode::staticEnumNextCallback(Board *orig, Board *b, Piece p, int pindex, bool judge, int tflag, void *args) {
 	TreeNode *_this = (TreeNode*)args;
-	return _this -> enumNextCallback(b, p, pindex, judge, tflag);
+	return _this -> enumNextCallback(orig, b, p, pindex, judge, tflag);
 }
 
-bool TreeNode::enumNextCallback(Board *b, Piece p, int pindex, bool judge, int tflag) {
+bool TreeNode::enumNextCallback(Board *orig, Board *b, Piece p, int pindex, bool judge, int tflag) {
 	bool ret = true;
 
 	if(judge) {
-		deleteChildNodes(); // 勝利局面を見つけたら、それ以外のノードを全て削除 (NOTE: nodeCount = 0 になる)
+		deleteChildNodes(orig); // 勝利局面を見つけたら、それ以外のノードを全て削除 (NOTE: nodeCount = 0 になる)
 		ret = false;
 		result = RESULT_WIN;
 		steps = 1;
@@ -46,7 +43,7 @@ bool TreeNode::enumNextCallback(Board *b, Piece p, int pindex, bool judge, int t
 		nextNode[nextCount] = map[*b]; // 既に見つかっているノードのポインタを格納
 		nextNode[nextCount] -> refCount++;
 	} else {
-		TreeNode *newtree = new TreeNode(b);
+		TreeNode *newtree = new TreeNode();
 		nextNode[nextCount] = newtree; // 新しいノードを作成してポインタを格納
 		map[*b] = newtree;
 		if(judge) { newtree -> result = RESULT_LOSE; newtree -> steps = 0; }
@@ -60,18 +57,24 @@ bool TreeNode::enumNextCallback(Board *b, Piece p, int pindex, bool judge, int t
 	return ret; // 勝利局面の場合は探索を中断、それ以外の場合は継続
 }
 
-void TreeNode::deleteChildNodes() {
+void TreeNode::deleteChildNodes(Board *board) {
 	for(int i = 0; i < nextCount; i++) {
 		if(--(nextNode[i] -> refCount) == 0) {
-			map.erase(*nextNode[i] -> board);
+			Board *b = new Board(*board);
+			b -> put(nextPiece[i]);
+			b -> normalize();
+			nextNode[i] -> deleteChildNodes(b);
 			delete nextNode[i];
+			nextNode[i] = nullptr;
+			map.erase(*b);
+			delete b;
 		}
 	}
 
 	nextCount = 0;
 }
 
-void TreeNode::expand() {
+void TreeNode::expand(Board *board) {
 	if(isExpanded) { return; }
 	isExpanded = true;
 
@@ -80,16 +83,15 @@ void TreeNode::expand() {
 	// 駒が置けない場合はパス (ノードを 1 つだけ作ってぶら下げる)
 	if(count == 0) {
 		Board *b = new Board(*board);
-		b -> changeTurn();
-		enumNextCallback(b, {0, 0, 0, 0}, -1, false, 0);
+		enumNextCallback(b, b, {0, 0, 0, 0}, -1, false, 0);
 	}
 }
 
-int TreeNode::select() {
+int TreeNode::select(Board *board) {
 	int tempCount = 0;
 	int tempIndex[NEXT_BOARDS];
 
-	if(!isExpanded) { expand(); }
+	if(!isExpanded) { expand(board); }
 	totalCount++;
 	totalCountOrig++;
 
@@ -171,28 +173,36 @@ int TreeNode::selectWhenLose() {
 	return idx;
 }
 
-void TreeNode::rollout() {
+void TreeNode::rollout(Board *board) {
 	int index[MAX_DEPTH];
 	int depth = 0;
 	TreeNode *current = this;
 	TreeNode *treenode[MAX_DEPTH];
+	Board *boards[MAX_DEPTH];
 
 	treenode[0] = current;
+	boards[0] = new Board(*board);
 	while(depth < MAX_DEPTH) {
-		int idx = current -> select();
+		int idx = current -> select(boards[depth]);
 		index[depth] = idx;
+		Board *temp = new Board(*boards[depth]);
+		temp -> put(current -> nextPiece[idx]);
+		temp -> normalize();
 		depth++;
 		current = current -> nextNode[idx];
 		treenode[depth] = current;
+		boards[depth] = temp;
 
 		// ステイルメイト判定
 		// NOTE: 2 連続でパスすると同一局面に戻るため、current == treenode[depth] == treenode[depth - 2] になる
 		if(depth >= 2 && current == treenode[depth - 2]) {
-			int judge = current -> board -> judgeStalemate() * ((depth % 1) ? -1 : 1);
+			int judge = boards[depth] -> judgeStalemate() * ((depth % 1) ? -1 : 1);
 			current -> result = (judge == 1 ? RESULT_WIN : judge == -1 ? RESULT_LOSE : RESULT_DRAW);
 			if(judge != 0) { current -> steps = 0; }
 
-			current -> deleteChildNodes(); // NOTE: このままだとループしてしまうので、不要な子ノード ( treenode[depth - 1] ) を削除
+			current -> deleteChildNodes(boards[depth]); // NOTE: このままだとループしてしまうので、不要な子ノード ( treenode[depth - 1] ) を削除
+			delete boards[depth];
+			delete boards[depth - 1];
 			depth -= 2;
 			break;
 		}
@@ -234,6 +244,9 @@ void TreeNode::rollout() {
 		}
 	}
 	treenode[0] -> winCount += winCountArr[0];
+
+	// メモリ解放
+	for(int i = 0; i <= depth; i++) { delete boards[i]; }
 }
 
 void TreeNode::test() {
@@ -284,7 +297,8 @@ void TreeNode::test() {
 	*/
 
 	// rollout のテスト
-	rollout();
+	Board *board = new Board();
+	rollout(board);
 	TreeNode *current = this;
 	int depth = 0;
 	int tflag = 0;
@@ -298,12 +312,14 @@ void TreeNode::test() {
 			current -> totalCount,
 			current -> totalCountOrig
 		);
-		current -> board -> output(tflag);
+		board -> output(tflag);
 
 		bool found = false;
 		for(int i = 0; i < current -> nextCount; i++) {
 			if(current -> nextNode[i] -> totalCount > 0 || current -> nextNode[i] -> steps == 0) {
 				found = true;
+				board -> put(current -> nextPiece[i]);
+				board -> normalize();
 				char buf[5];
 				if(current -> nextPiece[i].flipInv(tflag).getString(buf)) {
 					printf("[%s] tflag : %d%d%d, ", buf, tflag >> 2 & 1, tflag >> 1 & 1, tflag & 1);
